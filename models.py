@@ -1,7 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
-
-db = SQLAlchemy()
+from extensions import db
 
 # ------------------------
 # MODELS
@@ -44,6 +42,9 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     class_id = db.Column(db.Integer, db.ForeignKey('class.id'), nullable=True)
     enrollment_number = db.Column(db.String(50), unique=True, nullable=True)
+    # FIX 1: Admin-issued registration token for face capture
+    registration_token = db.Column(db.String(64), nullable=True, unique=True)
+    registration_token_expires = db.Column(db.DateTime, nullable=True)
 
     class_ref = db.relationship('Class', backref='students', foreign_keys=[class_id])
     

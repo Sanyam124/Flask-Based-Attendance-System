@@ -1,6 +1,10 @@
 Flask
+Flask-SQLAlchemy
+Flask-SocketIO
+python-dotenv
 opencv-python
 face-recognition
 numpy
 scikit-learn
 pandas
+eventlet

@@ -1,16 +1,18 @@
 from sqlalchemy import func
 from models import db, Attendance
+from config import KNOWN_FACES_DIR
 import face_recognition
 import os
 import pickle
+
 
 def generate_face_encodings(username):
     """
     Generates face encodings from images stored in static/faces/<username>/
     and saves them as a pickle file for fast loading.
     """
-    face_dir = f'static/faces/{username}'
-    encoding_file = f'static/faces/{username}/encodings.pkl'
+    face_dir = os.path.join(KNOWN_FACES_DIR, username)
+    encoding_file = os.path.join(face_dir, 'encodings.pkl')
 
     encodings = []
 
@@ -31,8 +33,6 @@ def generate_face_encodings(username):
     else:
         print(f"[WARNING] No faces detected for {username}")
 
-from sqlalchemy import func
-from models import db, Attendance
 
 def get_next_session_number(class_id, subject_id, for_date):
     """
