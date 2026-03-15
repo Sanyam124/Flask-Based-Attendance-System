@@ -1,257 +1,146 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF--8" />
-    <title>Manage Users</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --primary-color: #007bff;
-        --secondary-color: #6c757d;
-        --background-color: #f4f7f8;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-        --header-text-color: #ffffff;
-        --border-color: #dee2e6;
-      }
+{% extends "base.html" %}
 
-      body {
-        font-family: "Poppins", sans-serif;
-        background: var(--background-color);
-        margin: 0;
-        color: var(--text-color);
-      }
-      .container {
-        max-width: 1200px;
-        margin: 30px auto;
-        padding: 20px;
-      }
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--border-color);
-      }
-      h2 {
-        margin: 0;
-        color: var(--primary-color);
-        font-weight: 700;
-        font-size: 2rem;
-      }
-      .btn {
-        padding: 10px 20px;
-        border-radius: 8px;
-        text-decoration: none;
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border: none;
-        cursor: pointer;
-        font-size: 0.9rem;
-      }
-      .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-      }
-      .btn-primary {
-        background: linear-gradient(135deg, #007bff, #0056b3);
-      }
-      .btn-secondary {
-        background: linear-gradient(135deg, #6c757d, #5a6268);
-      }
-      .btn-danger {
-        background: linear-gradient(135deg, #dc3545, #c82333);
-      }
-      .btn-warning {
-        background: linear-gradient(135deg, #ffc107, #e0a800);
-        color: #212529;
-      }
-      .btn-success {
-        background: linear-gradient(135deg, #28a745, #218838);
-      }
+{% block title %}Manage Users — Smart Attendance{% endblock %}
 
-      .table-container {
-        background: var(--card-bg-color);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        padding: 18px 20px;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-        color: #555;
-      }
-      th {
-        background-color: var(--primary-color);
-        color: var(--header-text-color);
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 1px;
-        font-weight: 600;
-      }
-      tbody tr {
-        transition: background-color 0.25s ease;
-      }
-      tbody tr.inactive {
-        background-color: #f8d7da;
-        color: #721c24;
-      }
-      tbody tr:not(.inactive):hover {
-        background-color: #f1f5ff;
-      }
-      tbody tr:last-child td {
-        border-bottom: none;
-      }
-      .actions .action-buttons {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .actions .action-buttons form {
-        margin: 0;
-      }
-      .status-badge {
-        font-size: 0.8em;
-        padding: 4px 10px;
-        border-radius: 12px;
-        color: white;
-        font-weight: 600;
-      }
-      .status-active {
-        background-color: #28a745;
-      }
-      .status-inactive {
-        background-color: #dc3545;
-      }
-      .flash-messages {
-        list-style: none;
-        padding: 0;
-        margin-bottom: 20px;
-      }
-      .flash-messages li {
-        padding: 15px;
-        border-radius: 8px;
-        text-align: center;
-        font-weight: bold;
-      }
-      .flash-success {
-        background-color: #d4edda;
-        color: #155724;
-      }
-      .flash-danger {
-        background-color: #f8d7da;
-        color: #721c24;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <h2>Manage Users</h2>
-        <div>
-          <a href="{{ url_for('admin_add_user') }}" class="btn btn-primary"
-            >Add New User</a
-          >
-          <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary"
-            >Back to Dashboard</a
-          >
-        </div>
-      </header>
+{% block nav_links %}
+<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="{{ url_for('admin.admin_manage_users') }}" class="nav-link active"><i class="fas fa-users-cog"></i> Manage Users</a>
+<a href="{{ url_for('admin.admin_manage_classes') }}" class="nav-link"><i class="fas fa-school"></i> Manage Classes</a>
+<a href="{{ url_for('admin.admin_reports') }}" class="nav-link"><i class="fas fa-file-invoice"></i> Reports</a>
+{% endblock %}
 
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %}
-      <ul class="flash-messages">
-        {% for category, message in messages %}
-        <li class="flash-{{ category }}">{{ message }}</li>
-        {% endfor %}
-      </ul>
-      {% endif %} {% endwith %}
+{% block page_title %}User Management{% endblock %}
+{% block topbar_badge %}Management Console{% endblock %}
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th style="text-align: center">Sr. No.</th>
-              <th>Username</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th style="text-align: center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for user in users %}
-            <tr class="{{ 'inactive' if not user.is_active }}">
-              <td style="text-align: center">{{ loop.index }}</td>
-              <td>{{ user.username }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ user.role.title() }}</td>
-              <td>
-                {% if user.is_active %}
-                <span class="status-badge status-active">Active</span>
-                {% else %}
-                <span class="status-badge status-inactive">Inactive</span>
-                {% endif %}
-              </td>
-              <td class="actions" style="text-align: center">
-                <div class="action-buttons">
-                  {% if user.is_active %}
-                  <a
-                    href="{{ url_for('admin_update_user', user_id=user.id) }}"
-                    class="btn btn-warning"
-                    >Update</a
-                  >
-                  <form
-                    action="{{ url_for('admin_delete_user', user_id=user.id) }}"
-                    method="POST"
-                    onsubmit="return confirm('Are you sure you want to deactivate this user?');"
-                  >
-                    <button type="submit" class="btn btn-warning">
-                      Deactivate
-                    </button>
-                  </form>
-                  {% else %}
-                  <form
-                    action="{{ url_for('admin_reactivate_user', user_id=user.id) }}"
-                    method="POST"
-                  >
-                    <button type="submit" class="btn btn-success">
-                      Reactivate
-                    </button>
-                  </form>
-                  {% endif %}
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar" style="background: var(--bg3);">A</div>
+  <div class="user-info">
+    <div class="user-name">{{ session.get('username', 'Admin') }}</div>
+    <div class="user-role">Administrator</div>
+  </div>
+</div>
+{% endblock %}
 
-                  <!-- Permanent Delete button ONLY for students -->
-                  {% if user.role == 'student' %}
-                  <form
-                    action="{{ url_for('admin_delete_student', user_id=user.id) }}"
-                    method="POST"
-                    onsubmit="return confirm('WARNING: This will permanently delete the student and all their data (attendance, face samples). This cannot be undone. Are you sure?');"
-                  >
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                  </form>
-                  {% endif %}
-                </div>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </body>
-</html>
+{% block extra_css %}
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+.search-box { flex: 1; max-width: 400px; position: relative; }
+.search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text3); }
+.search-box input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px 10px 40px; color: var(--text); font-size: 0.875rem; }
+
+.status-row { transition: all 0.2s; }
+.status-row.inactive { opacity: 0.6; grayscale: 50%; }
+.role-badge { 
+  display: inline-flex; align-items:center; gap: 6px;
+  padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+}
+.role-student { background: rgba(99,102,241,0.12); color: var(--primary); }
+.role-teacher { background: rgba(168,85,247,0.12); color: #a855f7; }
+.role-admin { background: rgba(245,158,11,0.12); color: var(--yellow); }
+
+.state-indicator { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.state-active { background: var(--green); }
+.state-inactive { background: var(--red); }
+
+.action-btns { display: flex; gap: 8px; }
+{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Search by name, email or role..." id="user-search">
+  </div>
+  <a href="{{ url_for('admin.admin_add_user') }}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Add New User
+  </a>
+</div>
+
+<div class="table-card">
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 50px">#</th>
+        <th>User Profile</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th style="text-align: right">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="user-table-body">
+      {% for user in users %}
+      <tr class="status-row {{ 'inactive' if not user.is_active }}">
+        <td style="color: var(--text3); font-size: 0.8rem;">{{ loop.index }}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:12px">
+            <div style="width:34px; height:34px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--text3); font-size:0.8rem">
+              {{ user.username[0]|upper }}
+            </div>
+            <div>
+              <div style="font-size:0.875rem; font-weight:600; color:var(--text)">{{ user.username }}</div>
+              <div style="font-size:0.75rem; color:var(--text3)">{{ user.email }}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="role-badge role-{{ user.role }}">
+            <i class="fas fa-{% if user.role == 'student' %}user-graduate{% elif user.role == 'teacher' %}chalkboard-teacher{% else %}shield-alt{% endif %}"></i>
+            {{ user.role }}
+          </span>
+        </td>
+        <td>
+          <div style="display:flex; align-items:center; font-size:0.8rem; font-weight:600; color:{{ 'var(--green)' if user.is_active else 'var(--red)' }}">
+            <span class="state-indicator {{ 'state-active' if user.is_active else 'state-inactive' }}"></span>
+            {{ 'Active' if user.is_active else 'Inactive' }}
+          </div>
+        </td>
+        <td style="text-align: right">
+          <div class="action-btns" style="justify-content: flex-end">
+            {% if user.is_active %}
+            <a href="{{ url_for('admin.admin_update_user', user_id=user.id) }}" class="btn btn-ghost btn-xs" title="Edit User">
+              <i class="fas fa-edit"></i>
+            </a>
+            <form action="{{ url_for('admin.admin_deactivate_user', user_id=user.id) }}" method="POST" onsubmit="return confirm('Deactivate this user? They will be unable to log in but all history is preserved.');">
+              <button type="submit" class="btn btn-ghost btn-xs" style="color: var(--yellow)" title="Deactivate (Safe)">
+                <i class="fas fa-ban"></i>
+              </button>
+            </form>
+            {% else %}
+            <form action="{{ url_for('admin.admin_reactivate_user', user_id=user.id) }}" method="POST">
+              <button type="submit" class="btn btn-ghost btn-xs" style="color: var(--green)" title="Reactivate Account">
+                <i class="fas fa-undo"></i>
+              </button>
+            </form>
+            {% endif %}
+            
+            <i class="fas fa-question-circle" style="color:var(--text3); font-size:0.75rem; cursor:help" 
+               title="Deactivate: Hide user, keep history (Safe)&#10;Delete: Permanent removal (Use only for errors)"></i>
+
+            {% if user.role == 'student' %}
+            <form action="{{ url_for('admin.admin_delete_student_permanent', user_id=user.id) }}" method="POST" onsubmit="return confirm('PERMANENTLY DELETE student? This will fail if they have attendance history.');">
+              <button type="submit" class="btn btn-ghost btn-xs" style="color: var(--red)" title="Permanent Delete (Destructive)">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('user-search').addEventListener('input', function(e) {
+    const term = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#user-table-body tr');
+    rows.forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(term) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}

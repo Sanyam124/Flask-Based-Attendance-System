@@ -1,147 +1,108 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Students in {{ target_class.name }}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --primary-color: #007bff;
-        --secondary-color: #6c757d;
-        --background-color: #f4f7f8;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-        --header-text-color: #ffffff;
-        --border-color: #dee2e6;
-      }
-      body {
-        font-family: "Poppins", sans-serif;
-        background: var(--background-color);
-        margin: 0;
-        color: var(--text-color);
-      }
-      .container {
-        max-width: 1100px;
-        margin: 30px auto;
-        padding: 20px;
-      }
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--border-color);
-      }
-      h2 {
-        margin: 0;
-        color: var(--primary-color);
-        font-weight: 700;
-        font-size: 2rem;
-      }
-      h2 strong {
-        color: #333;
-      }
-      .btn {
-        padding: 12px 22px;
-        border-radius: 8px;
-        text-decoration: none;
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-      .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-      }
-      .btn-secondary {
-        background: linear-gradient(135deg, #6c757d, #5a6268);
-      }
-      .table-container {
-        background: var(--card-bg-color);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        padding: 18px 20px;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-        color: #555;
-      }
-      th {
-        background-color: var(--primary-color);
-        color: var(--header-text-color);
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 1px;
-        font-weight: 600;
-      }
-      tbody tr:hover {
-        background-color: #f1f5ff;
-      }
-      tbody tr:last-child td {
-        border-bottom: none;
-      }
-      td strong {
-        color: var(--text-color);
-        font-weight: 600;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <h2>Students in Class: <strong>{{ target_class.name }}</strong></h2>
-        <a
-          href="{{ url_for('admin_manage_classes') }}"
-          class="btn btn-secondary"
-          >Back to Classes List</a
-        >
-      </header>
+{% extends "base.html" %}
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th style="text-align: center">Sr. No.</th>
-              <th>Enrollment No.</th>
-              <th>Student Name</th>
-              <th>Email</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for student in students %}
-            <tr>
-              <td style="text-align: center">{{ loop.index }}</td>
-              <td><strong>{{ student.enrollment_number }}</strong></td>
-              <td>{{ student.username }}</td>
-              <td>{{ student.email }}</td>
-            </tr>
-            {% else %}
-            <tr>
-              <td
-                colspan="4"
-                style="text-align: center; padding: 40px; color: #888"
-              >
-                There are no active students assigned to this class.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </body>
-</html>
+{% block title %}Students in {{ target_class.name }} — Smart Attendance{% endblock %}
+
+{% block nav_links %}
+<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="{{ url_for('admin.admin_manage_users') }}" class="nav-link"><i class="fas fa-users-cog"></i> Manage Users</a>
+<a href="{{ url_for('admin.admin_manage_classes') }}" class="nav-link active"><i class="fas fa-school"></i> Manage Classes</a>
+<a href="{{ url_for('admin.admin_reports') }}" class="nav-link"><i class="fas fa-file-invoice"></i> Reports</a>
+{% endblock %}
+
+{% block page_title %}Class Roster: {{ target_class.name }}{% endblock %}
+{% block topbar_badge %}Management Console{% endblock %}
+
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar" style="background: var(--bg3);">A</div>
+  <div class="user-info">
+    <div class="user-name">{{ session.get('username', 'Admin') }}</div>
+    <div class="user-role">Administrator</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+.face-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;
+}
+.face-registered { background: rgba(16,185,129,0.12); color: var(--green); }
+.face-pending { background: rgba(245,158,11,0.12); color: var(--yellow); }
+
+.action-row { display: flex; gap: 8px; justify-content: flex-end; }
+{% endblock %}
+
+{% block content %}
+<div class="toolbar" style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+  <div>
+    <h3 style="font-size: 1rem; font-weight: 700; color: var(--text)">Verified Student List</h3>
+    <p style="font-size: 0.85rem; color: var(--text3)">Total: {{ students|length }} active students in this section.</p>
+  </div>
+  <a href="{{ url_for('admin.admin_manage_classes') }}" class="btn btn-ghost">
+    <i class="fas fa-arrow-left"></i> Back to Classes
+  </a>
+</div>
+
+<div class="table-card">
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 50px">#</th>
+        <th>Enrollment</th>
+        <th>Student Profile</th>
+        <th>Face ID Status</th>
+        <th style="text-align: right">Security Controls</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in students %}
+      <tr>
+        <td style="color: var(--text3); font-size: 0.8rem;">{{ loop.index }}</td>
+        <td><strong style="color: var(--text)">{{ student.enrollment_number }}</strong></td>
+        <td>
+          <div style="display:flex; align-items:center; gap:10px">
+            <div style="width:30px; height:30px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--text3); font-size:0.75rem">
+              {{ student.username[0]|upper }}
+            </div>
+            <span>{{ student.username }}</span>
+          </div>
+        </td>
+        <td>
+          {% if student.registration_token %}
+          <span class="face-badge face-pending"><i class="fas fa-clock"></i> Token Active</span>
+          {% else %}
+          <span class="face-badge face-registered"><i class="fas fa-check-circle"></i> Registered</span>
+          {% endif %}
+        </td>
+        <td style="text-align: right">
+          <div class="action-row">
+            <!-- Issue Token -->
+            <form action="{{ url_for('admin.admin_issue_registration_token', user_id=student.id) }}" method="POST">
+              <button type="submit" class="btn btn-ghost btn-xs" style="color: var(--green)" title="Issue Registration Token (10m)">
+                <i class="fas fa-key"></i> Issue Token
+              </button>
+            </form>
+            
+            <!-- Reset Face -->
+            <form action="{{ url_for('admin.admin_reset_face_data', user_id=student.id) }}" method="POST"
+                  onsubmit="return confirm('Reset face data for {{ student.username }}? This action is permanent.');">
+              <button type="submit" class="btn btn-ghost btn-xs" style="color: var(--red)" title="Reset Face Data">
+                <i class="fas fa-user-slash"></i> Reset
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 60px; color: var(--text3);">
+          <i class="fas fa-users-slash" style="font-size: 3rem; display: block; margin-bottom: 20px; opacity: 0.2;"></i>
+          No students are currently enrolled in this class.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

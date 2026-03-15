@@ -1,294 +1,140 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Manage Classes</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --primary-color: #007bff;
-        --secondary-color: #6c757d;
-        --background-color: #f4f7f8;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-        --header-text-color: #ffffff;
-        --border-color: #dee2e6;
-      }
+{% extends "base.html" %}
 
-      body {
-        font-family: "Poppins", sans-serif;
-        background: var(--background-color);
-        margin: 0;
-        color: var(--text-color);
-      }
-      .container {
-        max-width: 1100px;
-        margin: 30px auto;
-        padding: 20px;
-      }
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--border-color);
-      }
-      h2 {
-        margin: 0;
-        color: var(--primary-color);
-        font-weight: 700;
-        font-size: 2rem;
-      }
-      .btn {
-        padding: 12px 22px;
-        border-radius: 8px;
-        text-decoration: none;
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border: none;
-        cursor: pointer;
-        font-size: 0.9rem;
-      }
-      .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-      }
-      .btn-primary {
-        background: linear-gradient(135deg, #007bff, #0056b3);
-      }
-      .btn-secondary {
-        background: linear-gradient(135deg, #6c757d, #5a6268);
-      }
-      .btn-danger {
-        background: linear-gradient(135deg, #dc3545, #c82333);
-      }
-      .btn-warning {
-        background: linear-gradient(135deg, #ffc107, #e0a800);
-        color: #212529;
-      }
-      .btn-success {
-        background: linear-gradient(135deg, #28a745, #218838);
-      }
+{% block title %}Manage Classes — Smart Attendance{% endblock %}
 
-      .table-container {
-        background: var(--card-bg-color);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        padding: 18px 20px;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-        color: #555;
-      }
-      th {
-        background-color: var(--primary-color);
-        color: var(--header-text-color);
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 1px;
-        font-weight: 600;
-      }
-      tbody tr {
-        transition: background-color 0.25s ease;
-      }
-      tbody tr.inactive {
-        background-color: #f8d7da;
-        color: #721c24;
-      }
-      tbody tr:not(.inactive):hover {
-        background-color: #f1f5ff;
-      }
-      tbody tr:last-child td {
-        border-bottom: none;
-      }
-      ul {
-        padding-left: 0;
-        margin: 0;
-        list-style-type: none;
-      }
-      li {
-        margin-bottom: 8px;
-        padding-left: 10px;
-        border-left: 3px solid var(--primary-color);
-      }
-      li:last-child {
-        margin-bottom: 0;
-      }
-      td strong {
-        color: var(--text-color);
-        font-weight: 600;
-      }
-      .actions .action-buttons {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .actions .action-buttons form {
-        margin: 0;
-      }
-      .status-badge {
-        font-size: 0.8em;
-        padding: 4px 10px;
-        border-radius: 12px;
-        color: white;
-        font-weight: 600;
-      }
-      .status-active {
-        background-color: #28a745;
-      }
-      .status-inactive {
-        background-color: #dc3545;
-      }
-      .flash-messages {
-        list-style: none;
-        padding: 0;
-        margin-bottom: 20px;
-      }
-      .flash-messages li {
-        padding: 15px;
-        border-radius: 8px;
-        text-align: center;
-        font-weight: bold;
-      }
-      .flash-success {
-        background-color: #d4edda;
-        color: #155724;
-      }
+{% block nav_links %}
+<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="{{ url_for('admin.admin_manage_users') }}" class="nav-link"><i class="fas fa-users-cog"></i> Manage Users</a>
+<a href="{{ url_for('admin.admin_manage_classes') }}" class="nav-link active"><i class="fas fa-school"></i> Manage Classes</a>
+<a href="{{ url_for('admin.admin_reports') }}" class="nav-link"><i class="fas fa-file-invoice"></i> Reports</a>
+{% endblock %}
 
-      @media (max-width: 992px) {
-        .actions .action-buttons {
-          flex-direction: column;
-          align-items: stretch;
-        }
-        .actions .action-buttons .btn {
-          width: 100%;
-          box-sizing: border-box;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <h2>Manage Classes</h2>
-        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary"
-          >Back to Dashboard</a
-        >
-      </header>
+{% block page_title %}Class Registry{% endblock %}
+{% block topbar_badge %}Management Console{% endblock %}
 
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %}
-      <ul class="flash-messages">
-        {% for category, message in messages %}
-        <li class="flash-{{ category }}">{{ message }}</li>
-        {% endfor %}
-      </ul>
-      {% endif %} {% endwith %}
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar" style="background: var(--bg3);">A</div>
+  <div class="user-info">
+    <div class="user-name">{{ session.get('username', 'Admin') }}</div>
+    <div class="user-role">Administrator</div>
+  </div>
+</div>
+{% endblock %}
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 25%">Class Name</th>
-              <th>Assigned Teachers & Subjects</th>
-              <th style="width: 12%">Status</th>
-              <th style="text-align: center; width: 35%">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for cls in classes %}
-            <tr class="{{ 'inactive' if not cls.is_active }}">
-              <td><strong>{{ cls.name }}</strong></td>
-              <td>
-                {% if cls.class_teachers %}
-                <ul>
-                  {% for assoc in cls.class_teachers %}
-                  <li>
-                    <strong>{{ assoc.teacher.username }}</strong> - {{
-                    assoc.subject.name }}
-                  </li>
-                  {% endfor %}
-                </ul>
-                {% else %}
-                <span style="color: #888">No teachers assigned</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if cls.is_active %}
-                <span class="status-badge status-active">Active</span>
-                {% else %}
-                <span class="status-badge status-inactive">Inactive</span>
-                {% endif %}
-              </td>
-              <td class="actions" style="text-align: center">
-                <div class="action-buttons">
-                  <a
-                    href="{{ url_for('admin_view_class_students', class_id=cls.id) }}"
-                    class="btn btn-primary"
-                    >View Students</a
-                  >
+{% block extra_css %}
+.assignment-cell { padding-top: 14px; padding-bottom: 14px; }
+.assignment-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.assignment-chip {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+  padding: 4px 10px; display: flex; align-items: center; gap: 8px;
+  font-size: 0.78rem; transition: all 0.2s;
+}
+.assignment-chip:hover { border-color: var(--primary); }
+.assignment-chip strong { color: var(--text); }
+.assignment-chip .subject { color: var(--text3); display: flex; align-items: center; gap: 4px; }
+.assignment-chip .subject::before { content: '•'; color: var(--primary); }
 
-                  {% if cls.is_active %}
-                  <form
-                    action="{{ url_for('admin_deactivate_class', class_id=cls.id) }}"
-                    method="POST"
-                    onsubmit="return confirm('Deactivating this class will prevent new attendance from being taken. Are you sure?');"
-                  >
-                    <button type="submit" class="btn btn-warning">
-                      Deactivate
-                    </button>
-                  </form>
-                  {% else %}
-                  <form
-                    action="{{ url_for('admin_reactivate_class', class_id=cls.id) }}"
-                    method="POST"
-                  >
-                    <button type="submit" class="btn btn-success">
-                      Reactivate
-                    </button>
-                  </form>
-                  {% endif %}
+.status-tag { 
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+}
+.tag-active { background: rgba(16,185,129,0.12); color: var(--green); }
+.tag-inactive { background: rgba(239,68,68,0.12); color: var(--red); }
 
-                  <form
-                    action="{{ url_for('admin_delete_class', class_id=cls.id) }}"
-                    method="POST"
-                    onsubmit="return confirm('WARNING: This will permanently delete the class, its assignments, and all its students. This cannot be undone. Are you sure?');"
-                  >
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td
-                colspan="4"
-                style="text-align: center; padding: 40px; color: #888"
-              >
-                No classes have been created yet.
-              </td>
-            </tr>
+.class-row { transition: background 0.2s; }
+.class-row.inactive { opacity: 0.6; }
+.action-group { display: flex; gap: 8px; justify-content: flex-end; }
+{% endblock %}
+
+{% block content %}
+<div class="toolbar" style="margin-bottom: 24px;">
+  <div style="flex:1">
+    <h3 style="font-size:0.95rem; font-weight:700; color:var(--text)">Academic Structure</h3>
+    <p style="font-size:0.8rem; color:var(--text3)">Overview of active classes and teacher assignments.</p>
+  </div>
+  <!-- Classes are usually created via DB or a simple UI, leaving space for a Create Class button if needed in future -->
+</div>
+
+<div class="table-card">
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 180px">Class Name</th>
+        <th>Assigned Teachers & Subjects</th>
+        <th style="width: 120px">Status</th>
+        <th style="text-align: right; width: 340px">Administration</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cls in classes %}
+      <tr class="class-row {{ 'inactive' if not cls.is_active }}">
+        <td>
+          <div style="font-weight: 700; color: var(--text); font-size: 1rem;">
+            <i class="fas fa-chalkboard" style="color: var(--primary); margin-right: 10px; opacity: 0.6;"></i>
+            {{ cls.name }}
+          </div>
+        </td>
+        <td class="assignment-cell">
+          {% if cls.class_teachers %}
+          <ul class="assignment-list">
+            {% for assoc in cls.class_teachers %}
+            <li class="assignment-chip">
+              <strong>{{ assoc.teacher.username }}</strong>
+              <span class="subject">{{ assoc.subject.name }}</span>
+            </li>
             {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </body>
-</html>
+          </ul>
+          {% else %}
+          <span style="color: var(--text3); font-style: italic; font-size: 0.85rem;">No assignments</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="status-tag {{ 'tag-active' if cls.is_active else 'tag-inactive' }}">
+            <i class="fas fa-{{ 'circle-check' if cls.is_active else 'circle-xmark' }}"></i>
+            {{ 'Active' if cls.is_active else 'Inactive' }}
+          </span>
+        </td>
+        <td style="text-align: right">
+          <div class="action-group">
+            <a href="{{ url_for('admin.admin_view_class_students', class_id=cls.id) }}" class="btn btn-ghost btn-sm">
+              <i class="fas fa-user-group"></i> Students
+            </a>
+
+            {% if cls.is_active %}
+            <form action="{{ url_for('admin.admin_deactivate_class', class_id=cls.id) }}" method="POST" onsubmit="return confirm('Deactivate class? It will be hidden from menus but students and history remain.');">
+              <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--yellow)" title="Disable (Safe)">
+                <i class="fas fa-power-off"></i> Disable
+              </button>
+            </form>
+            {% else %}
+            <form action="{{ url_for('admin.admin_reactivate_class', class_id=cls.id) }}" method="POST">
+              <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--green)" title="Re-enable">
+                <i class="fas fa-play"></i> Enable
+              </button>
+            </form>
+            {% endif %}
+
+            <i class="fas fa-question-circle" style="color:var(--text3); font-size:0.85rem; cursor:help; align-self:center; margin: 0 4px" 
+               title="Disable: Keeps history, hides class.&#10;Delete: Permanent. Only allowed for classes without attendance."></i>
+
+            <form action="{{ url_for('admin.admin_delete_class', class_id=cls.id) }}" method="POST" onsubmit="return confirm('PERMANENTLY DELETE empty class? Students will become unassigned.');">
+              <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--red)" title="Permanent Delete">
+                <i class="fas fa-trash-can"></i>
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 60px; color: var(--text3);">
+          <i class="fas fa-school-circle-exclamation" style="font-size: 3rem; display: block; margin-bottom: 16px; opacity: 0.2;"></i>
+          No classes have been registered yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

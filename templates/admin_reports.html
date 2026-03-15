@@ -1,180 +1,111 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Attendance Reports</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --primary-color: #007bff;
-        --secondary-color: #6c757d;
-        --background-color: #f4f7f8;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-        --header-text-color: #ffffff;
-        --border-color: #dee2e6;
-      }
+{% extends "base.html" %}
 
-      body {
-        font-family: "Poppins", sans-serif;
-        background: var(--background-color);
-        margin: 0;
-        color: var(--text-color);
-      }
+{% block title %}System Reports — Smart Attendance{% endblock %}
 
-      .container {
-        max-width: 1100px;
-        margin: 30px auto;
-        padding: 20px;
-      }
+{% block nav_links %}
+<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="{{ url_for('admin.admin_manage_users') }}" class="nav-link"><i class="fas fa-users-cog"></i> Manage Users</a>
+<a href="{{ url_for('admin.admin_manage_classes') }}" class="nav-link"><i class="fas fa-school"></i> Manage Classes</a>
+<a href="{{ url_for('admin.admin_reports') }}" class="nav-link active"><i class="fas fa-file-invoice"></i> Reports</a>
+{% endblock %}
 
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--border-color);
-      }
+{% block page_title %}Student Analytics{% endblock %}
+{% block topbar_badge %}Reporting Engine{% endblock %}
 
-      header h2 {
-        margin: 0;
-        color: var(--primary-color);
-        font-weight: 700;
-        font-size: 2rem;
-      }
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar" style="background: var(--bg3);">A</div>
+  <div class="user-info">
+    <div class="user-name">{{ session.get('username', 'Admin') }}</div>
+    <div class="user-role">Administrator</div>
+  </div>
+</div>
+{% endblock %}
 
-      .btn {
-        padding: 12px 22px;
-        border-radius: 8px;
-        text-decoration: none;
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border: none;
-        cursor: pointer;
-        font-size: 0.9rem;
-      }
+{% block extra_css %}
+.report-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.class-pill {
+  background: rgba(34,211,238,0.1); color: var(--accent);
+  padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+}
+.export-btn { 
+  display: flex; align-items: center; gap: 8px; color: var(--primary); text-decoration: none; font-size: 0.875rem; font-weight: 700;
+  padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(99,102,241,0.2); transition: all 0.2s;
+}
+.export-btn:hover { background: rgba(99,102,241,0.1); border-color: var(--primary); }
+{% endblock %}
 
-      .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-      }
+{% block content %}
+<div class="report-controls">
+  <div style="flex:1">
+    <h3 style="font-size: 1rem; font-weight: 700; color: var(--text)">Attendance Export Registry</h3>
+    <p style="font-size: 0.85rem; color: var(--text3)">Download detailed attendance logs for any student.</p>
+  </div>
+  <div class="search-box" style="width: 300px; margin: 0;">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Filter by name or class..." id="report-search">
+  </div>
+</div>
 
-      .btn-primary {
-        background: linear-gradient(135deg, #007bff, #0056b3);
-      }
+<div class="table-card">
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 60px">#</th>
+        <th>Enrollment</th>
+        <th>Student Name</th>
+        <th>Assigned Class</th>
+        <th style="text-align: right">Data Export</th>
+      </tr>
+    </thead>
+    <tbody id="report-table-body">
+      {% for student in students %}
+      <tr>
+        <td style="color: var(--text3); font-size: 0.8rem;">{{ loop.index }}</td>
+        <td><strong style="color: var(--text)">{{ student.enrollment_number or '—' }}</strong></td>
+        <td>
+          <div style="display:flex; align-items:center; gap:10px">
+            <div style="width:30px; height:30px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--text3); font-size:0.75rem">
+              {{ student.username[0]|upper }}
+            </div>
+            <span>{{ student.username }}</span>
+          </div>
+        </td>
+        <td>
+          {% if student.class_ref %}
+          <span class="class-pill"><i class="fas fa-school" style="font-size:0.7rem"></i> {{ student.class_ref.name }}</span>
+          {% else %}
+          <span style="color: var(--text3); font-size: 0.8rem;">Unassigned</span>
+          {% endif %}
+        </td>
+        <td style="text-align: right">
+          <a href="{{ url_for('admin.admin_export_attendance', student_id=student.id) }}" class="export-btn">
+            <i class="fas fa-file-csv"></i> Export CSV
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 60px; color: var(--text3);">
+          <i class="fas fa-file-circle-exclamation" style="font-size: 3.5rem; display: block; margin-bottom: 20px; opacity: 0.2;"></i>
+          No student records found to generate reports.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
 
-      .btn-secondary {
-        background: linear-gradient(135deg, #6c757d, #5a6268);
-      }
-
-      .table-container {
-        background: var(--card-bg-color);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      th,
-      td {
-        padding: 18px 20px;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-      }
-
-      th {
-        background-color: var(--primary-color);
-        color: var(--header-text-color);
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 1px;
-        font-weight: 600;
-      }
-
-      tbody tr {
-        transition: background-color 0.25s ease;
-      }
-
-      tbody tr:hover {
-        background-color: #f1f5ff;
-      }
-
-      tbody tr:last-child td {
-        border-bottom: none;
-      }
-
-      td {
-        color: #555;
-      }
-
-      td strong {
-        color: #333;
-        font-weight: 600;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <h2>Student Attendance Reports</h2>
-        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary"
-          >Back to Dashboard</a
-        >
-      </header>
-
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th style="text-align: center">Sr. No.</th>
-              <th>Enrollment No.</th>
-              <th>Student Name</th>
-              <th>Class</th>
-              <th style="text-align: center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for student in students %}
-            <tr>
-              <td style="text-align: center">{{ loop.index }}</td>
-              <td><strong>{{ student.enrollment_number or 'N/A' }}</strong></td>
-              <td>{{ student.username }}</td>
-              <td>
-                {{ student.class_ref.name if student.class_ref else '-' }}
-              </td>
-              <td style="text-align: center">
-                <a
-                  href="{{ url_for('admin_export_attendance', student_id=student.id) }}"
-                  class="btn btn-primary"
-                  >Export CSV</a
-                >
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td
-                colspan="5"
-                style="text-align: center; padding: 40px; color: #888"
-              >
-                There are no students in the system to generate reports for.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </body>
-</html>
+{% block extra_js %}
+<script>
+  document.getElementById('report-search').addEventListener('input', function(e) {
+    const term = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#report-table-body tr');
+    rows.forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(term) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}
