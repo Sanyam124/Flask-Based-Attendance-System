@@ -1,342 +1,147 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Update Attendance</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --primary-color: #007bff;
-        --secondary-color: #6c757d;
-        --background-color: #f4f7f8;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-        --header-text-color: #ffffff;
-        --border-color: #dee2e6;
-      }
+{% extends "base.html" %}
+{% block title %}Update Attendance — Smart Attendance{% endblock %}
 
-      body {
-        font-family: "Poppins", sans-serif;
-        background: var(--background-color);
-        margin: 0;
-        color: var(--text-color);
-      }
-      .container {
-        max-width: 900px;
-        margin: 30px auto;
-        padding: 20px;
-      }
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--border-color);
-      }
-      h2 {
-        margin: 0;
-        color: var(--primary-color);
-        font-weight: 700;
-        font-size: 2rem;
-      }
-      h3 {
-        color: var(--primary-color);
-        font-weight: 600;
-        font-size: 1.5rem;
-        text-align: center;
-        margin-bottom: 20px;
-      }
-      .btn {
-        padding: 12px 22px;
-        border-radius: 8px;
-        text-decoration: none;
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border: none;
-        cursor: pointer;
-        font-size: 0.9rem;
-      }
-      .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-      }
-      .btn-primary {
-        background: linear-gradient(135deg, #007bff, #0056b3);
-      }
-      .btn-secondary {
-        background: linear-gradient(135deg, #6c757d, #5a6268);
-      }
+{% block nav_links %}
+<a href="{{ url_for('teacher.teacher_dashboard') }}" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+<a href="{{ url_for('teacher.manual_attendance') }}" class="nav-link"><i class="fas fa-pen-to-square"></i> Manual Attendance</a>
+<a href="{{ url_for('teacher.update_attendance') }}" class="nav-link active"><i class="fas fa-clock-rotate-left"></i> Update Records</a>
+<a href="{{ url_for('teacher.teacher_attendance_reports') }}" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+{% endblock %}
+{% block page_title %}Update Records{% endblock %}
+{% block topbar_badge %}<i class="fas fa-clock-rotate-left" style="color:var(--yellow);margin-right:6px"></i>Past Records{% endblock %}
+{% block sidebar_user %}
+<div class="user-card"><div class="user-avatar">T</div><div class="user-info"><div class="user-name">Teacher</div><div class="user-role">Teacher</div></div></div>
+{% endblock %}
 
-      .card {
-        background: var(--card-bg-color);
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-        margin-bottom: 30px;
-      }
-      .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        align-items: flex-end;
-      }
-      .form-group {
-        display: flex;
-        flex-direction: column;
-      }
-      label {
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: var(--subtle-text-color);
-      }
-      select,
-      input[type="date"] {
-        width: 100%;
-        padding: 12px 15px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        font-size: 1rem;
-        font-family: "Poppins", sans-serif;
-        box-sizing: border-box;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        padding: 15px;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-      }
-      th {
-        background-color: var(--primary-color);
-        color: var(--header-text-color);
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 1px;
-      }
-      tbody tr:last-child td {
-        border-bottom: none;
-      }
-      input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-        accent-color: var(--primary-color);
-      }
-      .flash-messages {
-        list-style: none;
-        padding: 0;
-        margin-bottom: 20px;
-      }
-      .flash-messages li {
-        padding: 15px;
-        border-radius: 8px;
-        text-align: center;
-        font-weight: bold;
-      }
-      .flash-success {
-        background-color: #d4edda;
-        color: #155724;
-      }
-      .flash-danger {
-        background-color: #f8d7da;
-        color: #721c24;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <h2>Update Attendance Records</h2>
-        <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary"
-          >Back to Dashboard</a
-        >
-      </header>
+{% block extra_css %}
+.filter-bar {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 22px 24px; margin-bottom: 24px;
+  display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 16px; align-items: end;
+}
+.filter-bar label { font-size: 0.75rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 7px; }
+.filter-bar select, .filter-bar input[type=date] {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text); padding: 10px 14px;
+  font-size: 0.875rem; font-family: 'Inter', sans-serif;
+}
+.filter-bar select:focus, .filter-bar input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+.student-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.student-toggle {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 15px 18px; display: flex; align-items: center; gap: 14px;
+  cursor: pointer; transition: all 0.2s; position: relative;
+}
+.student-toggle input[type=checkbox] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 2; }
+.student-toggle:hover { background: var(--card-hover); border-color: rgba(99,102,241,0.3); }
+.st-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--bg3); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text3); transition: all 0.2s; flex-shrink: 0; }
+.st-name { font-size: 0.875rem; font-weight: 600; color: var(--text2); }
+.check-icon { margin-left: auto; color: var(--text3); transition: all 0.2s; }
+.student-toggle:has(input:checked) { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.3); }
+.student-toggle:has(input:checked) .st-avatar { background: linear-gradient(135deg,var(--green),#34d399); border-color: transparent; color: white; }
+.student-toggle:has(input:checked) .st-name { color: var(--text); }
+.student-toggle:has(input:checked) .check-icon { color: var(--green); }
+{% endblock %}
 
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %}
-      <ul class="flash-messages">
-        {% for category, message in messages %}
-        <li class="flash-{{ category }}">{{ message }}</li>
+{% block content %}
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <form method="POST" action="{{ url_for('teacher.update_attendance') }}" id="filter-form" style="display:contents">
+    <div>
+      <label>Class & Subject</label>
+      <select name="class_teacher_id" id="class-select" required>
+        <option value="">— Select Class —</option>
+        {% for assoc in classes_taught %}
+        <option value="{{ assoc.id }}" {% if selected_ct_id == assoc.id %}selected{% endif %}>
+          {{ assoc.class_ref.name }} ({{ assoc.subject.name }})
+        </option>
         {% endfor %}
-      </ul>
-      {% endif %} {% endwith %}
-
-      <div class="card">
-        <form method="POST" action="{{ url_for('update_attendance') }}">
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="class-select">Class & Subject:</label>
-              <select name="class_teacher_id" id="class-select" required>
-                <option value="">-- Please Select --</option>
-                {% for assoc in classes_taught %}
-                <option
-                  value="{{ assoc.id }}"
-                  {% if selected_ct_id == assoc.id %}selected{% endif %}
-                >
-                  {{ assoc.class_ref.name }} ({{ assoc.subject.name }})
-                </option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="date-select">Date:</label>
-              <input
-                type="date"
-                id="date-select"
-                name="date"
-                value="{{ selected_date }}"
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label for="session-select">Session:</label>
-              <select name="session" id="session-select" required>
-                <option value="">-- Select a Class & Date First --</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <button
-                type="submit"
-                class="btn btn-primary"
-                style="width: 100%"
-              >
-                Fetch Records
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      {% if students_for_update %}
-      <div class="card">
-        <h3>
-          Editing Attendance for {{ selected_date }} - Session {{
-          selected_session }}
-        </h3>
-        <form
-          method="POST"
-          action="{{ url_for('handle_update_attendance') }}"
-        >
-          <input
-            type="hidden"
-            name="class_teacher_id"
-            value="{{ selected_ct_id }}"
-          />
-          <input type="hidden" name="date" value="{{ selected_date }}" />
-          <input type="hidden" name="session" value="{{ selected_session }}" />
-          <table>
-            <thead>
-              <tr>
-                <th>Student Name</th>
-                <th style="text-align: center; width: 20%">
-                  Status (Present)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for student in students_for_update %}
-              <tr>
-                <td>{{ student.username }}</td>
-                <td style="text-align: center">
-                  <input
-                    type="checkbox"
-                    name="present_students"
-                    value="{{ student.id }}"
-                    {% if student_statuses.get(student.id) == 'present'
-                    %}checked{% endif %}
-                  />
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          <button
-            type="submit"
-            class="btn btn-primary"
-            style="width: 100%; margin-top: 30px"
-          >
-            Save Changes
-          </button>
-        </form>
-      </div>
-      {% elif request.method == 'POST' %}
-      <div
-        class="card"
-        style="text-align: center; color: var(--subtle-text-color)"
-      >
-        <p>No attendance records found for the selected date and session.</p>
-      </div>
-      {% endif %}
+      </select>
     </div>
+    <div>
+      <label>Date</label>
+      <input type="date" name="date" id="date-select" value="{{ selected_date or '' }}" required />
+    </div>
+    <div>
+      <label>Session</label>
+      <select name="session" id="session-select" required>
+        <option value="">— Select date first —</option>
+      </select>
+    </div>
+    <div>
+      <button type="submit" class="btn btn-primary" style="white-space:nowrap">
+        <i class="fas fa-search"></i> Fetch Records
+      </button>
+    </div>
+  </form>
+</div>
 
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const classSelect = document.getElementById("class-select");
-        const dateSelect = document.getElementById("date-select");
-        const sessionSelect = document.getElementById("session-select");
+{% if students_for_update %}
+<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+    <h3 style="font-size:1rem;font-weight:700;color:var(--text);flex:1">
+      <i class="fas fa-edit" style="color:var(--yellow);margin-right:8px"></i>
+      Editing: {{ selected_date }} — Session {{ selected_session }}
+    </h3>
+    <button type="button" onclick="selectAll()" class="btn btn-ghost btn-sm"><i class="fas fa-check-double"></i> All Present</button>
+    <button type="button" onclick="selectNone()" class="btn btn-ghost btn-sm"><i class="fas fa-times"></i> Clear All</button>
+  </div>
+  <form method="POST" action="{{ url_for('teacher.handle_update_attendance') }}" id="update-form">
+    <input type="hidden" name="class_teacher_id" value="{{ selected_ct_id }}" />
+    <input type="hidden" name="date" value="{{ selected_date }}" />
+    <input type="hidden" name="session" value="{{ selected_session }}" />
+    <div class="student-grid">
+      {% for student in students_for_update %}
+      <label class="student-toggle">
+        <input type="checkbox" name="present_students" value="{{ student.id }}"
+               {% if student_statuses.get(student.id) == 'present' %}checked{% endif %} />
+        <div class="st-avatar">{{ student.username[0]|upper }}</div>
+        <div>
+          <div class="st-name">{{ student.username }}</div>
+          <div style="font-size:0.72rem;color:var(--text3)">{{ student.enrollment_number or '—' }}</div>
+        </div>
+        <i class="fas fa-check-circle check-icon"></i>
+      </label>
+      {% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg btn-block">
+      <i class="fas fa-save"></i> Save Changes
+    </button>
+  </form>
+</div>
+{% elif request.method == 'POST' %}
+<div style="text-align:center;padding:60px;color:var(--text3)">
+  <i class="fas fa-calendar-times" style="font-size:3rem;display:block;margin-bottom:16px;opacity:0.3"></i>
+  No records found for the selected date and session.
+</div>
+{% endif %}
+{% endblock %}
 
-        async function fetchSessions() {
-          const date = dateSelect.value;
-          const classTeacherId = classSelect.value;
-
-          if (!date || !classTeacherId) {
-            sessionSelect.innerHTML =
-              '<option value="">-- Select Class & Date --</option>';
-            return;
-          }
-
-          sessionSelect.innerHTML = '<option value="">Loading...</option>';
-          try {
-            // --- CORRECTED: Pass both date and class_teacher_id to the API ---
-            const response = await fetch(
-              `/api/sessions_for_date?date=${date}&class_teacher_id=${classTeacherId}`
-            );
-            if (!response.ok) throw new Error("Network response was not ok");
-
-            const data = await response.json();
-            sessionSelect.innerHTML = ""; // Clear options
-
-            if (data.sessions && data.sessions.length > 0) {
-              data.sessions.forEach((session_num) => {
-                const option = document.createElement("option");
-                option.value = session_num;
-                option.textContent = `Session ${session_num}`;
-                sessionSelect.appendChild(option);
-              });
-              const previouslySelected = "{{ selected_session or '' }}";
-              if (previouslySelected) {
-                sessionSelect.value = previouslySelected;
-              }
-            } else {
-              sessionSelect.innerHTML =
-                '<option value="">-- No Sessions Found --</option>';
-            }
-          } catch (error) {
-            console.error("Error fetching sessions:", error);
-            sessionSelect.innerHTML =
-              '<option value="">-- Error Loading --</option>';
-          }
-        }
-
-        classSelect.addEventListener("change", fetchSessions);
-        dateSelect.addEventListener("change", fetchSessions);
-
-        if (dateSelect.value && classSelect.value) {
-          fetchSessions();
-        }
+{% block extra_js %}
+<script>
+  async function fetchSessions() {
+    const date = document.getElementById('date-select').value;
+    const ctId = document.getElementById('class-select').value;
+    const sel  = document.getElementById('session-select');
+    if (!date || !ctId) { sel.innerHTML = '<option value="">— Select class & date first —</option>'; return; }
+    sel.innerHTML = '<option value="">Loading...</option>';
+    const r = await fetch(`/teacher/api/sessions_for_date?date=${date}&class_teacher_id=${ctId}`);
+    const data = await r.json();
+    sel.innerHTML = '';
+    if (data.sessions?.length) {
+      data.sessions.forEach(n => {
+        const o = document.createElement('option');
+        o.value = n; o.textContent = `Session ${n}`;
+        if (n == {{ selected_session or 'null' }}) o.selected = true;
+        sel.appendChild(o);
       });
-    </script>
-  </body>
-</html>
+    } else { sel.innerHTML = '<option value="">No sessions found</option>'; }
+  }
+  document.getElementById('class-select').addEventListener('change', fetchSessions);
+  document.getElementById('date-select').addEventListener('change', fetchSessions);
+  if (document.getElementById('date-select').value) fetchSessions();
 
+  function selectAll() { document.querySelectorAll('#update-form input[type=checkbox]').forEach(c=>c.checked=true); }
+  function selectNone() { document.querySelectorAll('#update-form input[type=checkbox]').forEach(c=>c.checked=false); }
+</script>
+{% endblock %}

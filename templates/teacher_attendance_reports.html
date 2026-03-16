@@ -1,167 +1,90 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Attendance Reports</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --primary-color: #007bff;
-        --secondary-color: #6c757d;
-        --background-color: #f4f7f8;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-        --header-text-color: #ffffff;
-        --border-color: #dee2e6;
-      }
+{% extends "base.html" %}
+{% block title %}Attendance Reports — Smart Attendance{% endblock %}
 
-      body {
-        font-family: "Poppins", sans-serif;
-        background: var(--background-color);
-        margin: 0;
-        color: var(--text-color);
-      }
-      .container {
-        max-width: 1100px;
-        margin: 30px auto;
-        padding: 20px;
-      }
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--border-color);
-      }
-      h2 {
-        margin: 0;
-        color: var(--primary-color);
-        font-weight: 700;
-        font-size: 2rem;
-      }
-      .btn {
-        padding: 12px 22px;
-        border-radius: 8px;
-        text-decoration: none;
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-      .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-      }
-      .btn-secondary {
-        background: linear-gradient(135deg, #6c757d, #5a6268);
-      }
-      .report-section {
-        margin-bottom: 40px;
-      }
-      .report-section h3 {
-        color: var(--primary-color);
-        font-weight: 600;
-        font-size: 1.5rem;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid var(--border-color);
-      }
-      .table-container {
-        background: var(--card-bg-color);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        padding: 18px 20px;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-        color: #555;
-      }
-      th {
-        background-color: var(--primary-color);
-        color: var(--header-text-color);
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 1px;
-        font-weight: 600;
-      }
-      tbody tr:hover {
-        background-color: #f1f5ff;
-      }
-      tbody tr:last-child td {
-        border-bottom: none;
-      }
-      td strong {
-        color: var(--text-color);
-        font-weight: 600;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <h2>Attendance Reports</h2>
-        <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary"
-          >Back to Dashboard</a
-        >
-      </header>
+{% block nav_links %}
+<a href="{{ url_for('teacher.teacher_dashboard') }}" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+<a href="{{ url_for('teacher.manual_attendance') }}" class="nav-link"><i class="fas fa-pen-to-square"></i> Manual Attendance</a>
+<a href="{{ url_for('teacher.update_attendance') }}" class="nav-link"><i class="fas fa-clock-rotate-left"></i> Update Records</a>
+<a href="{{ url_for('teacher.teacher_attendance_reports') }}" class="nav-link active"><i class="fas fa-chart-bar"></i> Reports</a>
+{% endblock %}
+{% block page_title %}Attendance Reports{% endblock %}
+{% block topbar_badge %}<i class="fas fa-chart-bar" style="color:var(--accent);margin-right:6px"></i>Teacher View{% endblock %}
+{% block sidebar_user %}
+<div class="user-card"><div class="user-avatar">T</div><div class="user-info"><div class="user-name">Teacher</div><div class="user-role">Teacher</div></div></div>
+{% endblock %}
 
-      {% if reports %} {% for report_key, student_reports in reports.items() %}
-      <div class="report-section">
-        <h3>{{ report_key }}</h3>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th style="text-align: center">Sr. No.</th>
-                <th>Student Name</th>
-                <th>Enrollment No.</th>
-                <th style="text-align: center">Present / Total</th>
-                <th style="text-align: center">Percentage (%)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for report in student_reports %}
-              <tr>
-                <td style="text-align: center">{{ loop.index }}</td>
-                <td>{{ report.student.username }}</td>
-                <td><strong>{{ report.student.enrollment_number }}</strong></td>
-                <td style="text-align: center">
-                  {{ report.present_count }} / {{ report.total_count }}
-                </td>
-                <td style="text-align: center">{{ report.percentage }}%</td>
-              </tr>
-              {% else %}
-              <tr>
-                <td
-                  colspan="5"
-                  style="text-align: center; padding: 30px; color: #888"
-                >
-                  No students in this class.
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+{% block extra_css %}
+.report-block { margin-bottom: 32px; }
+.report-block-title {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 16px;
+}
+.report-block-title h3 { font-size: 1rem; font-weight: 700; color: var(--text); }
+.report-block-title .class-badge { background: rgba(34,211,238,0.12); color: var(--accent); border-radius: 8px; padding: 5px 12px; font-size: 0.78rem; font-weight: 700; }
+.pct-cell { min-width: 160px; }
+{% endblock %}
+
+{% block content %}
+{% if reports %}
+  {% for assoc, student_reports in reports.items() %}
+  <div class="report-block">
+    <div class="report-block-title">
+      <div style="flex:1; display:flex; align-items:center; gap:12px">
+        <i class="fas fa-school" style="color:var(--primary)"></i>
+        <h3>{{ assoc.class_ref.name }} — {{ assoc.subject.name }}</h3>
+        <span class="class-badge">{{ student_reports|length }} students</span>
       </div>
-      {% endfor %} {% else %}
-      <div class="card" style="text-align: center; padding: 40px; color: #888">
-        <p>No attendance records are available for your classes.</p>
+      <div style="display:flex; gap:8px">
+        <a href="{{ url_for('teacher.export_attendance', class_teacher_id=assoc.id) }}" class="btn btn-ghost btn-sm" title="Detailed logs for every session">
+          <i class="fas fa-list-ul"></i> Export Logs
+        </a>
+        <a href="{{ url_for('teacher.export_summary', class_teacher_id=assoc.id) }}" class="btn btn-ghost btn-sm" title="Final percentages for all students">
+          <i class="fas fa-file-invoice"></i> Export Summary
+        </a>
       </div>
-      {% endif %}
     </div>
-  </body>
-</html>
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Enrollment No.</th>
+            <th style="text-align:center">Present / Total</th>
+            <th class="pct-cell">Attendance %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rep in student_reports %}
+          <tr>
+            <td style="color:var(--text3)">{{ loop.index }}</td>
+            <td><strong>{{ rep.student.username }}</strong></td>
+            <td>{{ rep.student.enrollment_number or '—' }}</td>
+            <td style="text-align:center">{{ rep.present_count }} / {{ rep.total_count }}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div class="progress-wrap" style="flex:1">
+                  <div class="progress-bar {% if rep.percentage >= 75 %}good{% elif rep.percentage >= 50 %}warning{% else %}danger{% endif %}"
+                       style="width: {{ [rep.percentage, 100]|min }}%"></div>
+                </div>
+                <span class="badge {% if rep.percentage >= 75 %}badge-green{% elif rep.percentage >= 50 %}badge-yellow{% else %}badge-red{% endif %}">
+                  {{ rep.percentage }}%
+                </span>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">No students in this class.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+<div style="text-align:center;padding:80px;color:var(--text3)">
+  <i class="fas fa-chart-bar" style="font-size:3rem;display:block;margin-bottom:16px;opacity:0.25"></i>
+  No attendance records available for your classes yet.
+</div>
+{% endif %}
+{% endblock %}

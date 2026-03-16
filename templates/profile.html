@@ -1,164 +1,119 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>{{ user.username }}'s Profile</title>
-    <style>
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0;
-        background-color: #f4f7f8;
-        color: #333;
-      }
-      .container {
-        max-width: 800px;
-        margin: 30px auto;
-        padding: 30px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      }
-      .profile-header {
-        display: flex;
-        align-items: center;
-        gap: 25px;
-        padding-bottom: 25px;
-        margin-bottom: 25px;
-        border-bottom: 1px solid #e9ecef;
-      }
-      .profile-pic {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background-color: #007bff;
-        color: white;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 3rem;
-        font-weight: bold;
-        overflow: hidden;
-        flex-shrink: 0;
-      }
-      .profile-pic img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      .profile-info h2 {
-        margin: 0;
-        color: #0056b3;
-      }
-      .profile-info p {
-        margin: 5px 0 0;
-        color: #6c757d;
-        font-size: 1.1rem;
-      }
-      .profile-details {
-        line-height: 2;
-      }
-      .profile-item {
-        display: grid;
-        grid-template-columns: 180px 1fr;
-        margin-bottom: 10px;
-      }
-      .profile-item .label {
-        font-weight: bold;
-        color: #555;
-      }
-      .profile-item .value {
-        color: #333;
-      }
-      ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      .value li {
-        background: #f8f9fa;
-        padding: 8px 12px;
-        border-radius: 6px;
-        margin-bottom: 5px;
-      }
-      .back-link {
-        display: inline-block;
-        margin-top: 30px;
-        padding: 10px 20px;
-        background: #6c757d;
-        color: #fff;
-        text-decoration: none;
-        border-radius: 8px;
-        transition: 0.3s;
-      }
-      .back-link:hover {
-        background: #5a6268;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="profile-header">
-        <div class="profile-pic">
-          {% if profile_image_url %}
-          <img
-            src="{{ url_for('static', filename=profile_image_url) }}"
-            alt="Profile Picture"
-          />
-          {% else %}
-          <span>{{ user.username[0]|upper }}</span>
-          {% endif %}
-        </div>
-        <div class="profile-info">
-          <h2>{{ user.username }}</h2>
-          <p>{{ user.role.title() }}</p>
-        </div>
-      </div>
+{% extends "base.html" %}
 
-      <h3>User Details</h3>
-      <div class="profile-details">
-        <div class="profile-item">
-          <span class="label">User ID</span>
-          <span class="value">{{ user.id }}</span>
-        </div>
-        <div class="profile-item">
-          <span class="label">Email</span>
-          <span class="value">{{ user.email }}</span>
-        </div>
+{% block title %}{{ user.username }}'s Profile — Smart Attendance{% endblock %}
 
-        <!-- Display Enrollment Number for Students -->
-        {% if user.role == 'student' %}
-        <div class="profile-item">
-          <span class="label">Enrollment Number</span>
-          <span class="value">{{ user.enrollment_number or 'Not set' }}</span>
-        </div>
-        {% endif %}
+{% block page_title %}User Profile{% endblock %}
+{% block topbar_badge %}Account Information{% endblock %}
 
-        <!-- Display Class for Students -->
-        {% if user.role == 'student' and user.class_ref %}
-        <div class="profile-item">
-          <span class="label">Class</span>
-          <span class="value">{{ user.class_ref.name }}</span>
-        </div>
-        {% endif %}
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar" style="background: linear-gradient(135deg, var(--primary), var(--accent));">
+    {{ user.username[0]|upper }}
+  </div>
+  <div class="user-info">
+    <div class="user-name">{{ user.username }}</div>
+    <div class="user-role">{{ user.role.title() }}</div>
+  </div>
+</div>
+{% endblock %}
 
-        <!-- Display Classes for Teachers -->
-        {% if user.role == 'teacher' and user.class_assignments %}
-        <div class="profile-item">
-          <span class="label">Assigned Classes</span>
-          <div class="value">
-            <ul>
-              {% for assoc in user.class_assignments %}
-              <li>{{ assoc.class_ref.name }} ({{ assoc.subject.name }})</li>
-              {% endfor %}
-            </ul>
-          </div>
-        </div>
-        {% endif %}
-      </div>
+{% block extra_css %}
+.profile-container { max-width: 800px; margin: 0 auto; }
+.profile-hero {
+  background: var(--card); border: 1px solid var(--border); border-radius: 24px;
+  padding: 48px 32px; text-align: center; margin-bottom: 32px;
+  position: relative; overflow: hidden;
+}
+.profile-hero::before {
+  content: ''; position: absolute; top:0; left:0; right:0; height: 120px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  opacity: 0.15;
+}
+.hero-avatar {
+  width: 120px; height: 120px; border-radius: 50%;
+  background: var(--bg3); border: 4px solid var(--card);
+  margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;
+  font-size: 3rem; font-weight: 800; color: var(--text);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  position: relative; z-index: 2;
+}
+.hero-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
-      <a href="{{ url_for(user.role + '_dashboard') }}" class="back-link"
-        >Back to Dashboard</a
-      >
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.info-item {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px 24px; display: flex; flex-direction: column; gap: 8px;
+}
+.info-label { font-size: 0.75rem; font-weight: 800; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+.info-value { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+.info-full { grid-column: span 2; }
+
+.class-list { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.class-item {
+  background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 8px; padding: 6px 14px; font-size: 0.85rem; color: var(--primary); font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+  <div class="profile-hero">
+    <div class="hero-avatar">
+      {% if profile_image_url %}
+        <img src="{{ url_for('static', filename=profile_image_url) }}" alt="Avatar">
+      {% else %}
+        {{ user.username[0]|upper }}
+      {% endif %}
     </div>
-  </body>
-</html>
+    <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--text);">{{ user.username }}</h2>
+    <p style="color: var(--accent); font-weight: 700; font-size: 0.9rem; text-transform: uppercase;">{{ user.role }}</p>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-item">
+      <span class="info-label"><i class="fas fa-fingerprint" style="margin-right:6px"></i> System ID</span>
+      <span class="info-value">#{{ user.id }}</span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label"><i class="fas fa-envelope" style="margin-right:6px"></i> Email Address</span>
+      <span class="info-value">{{ user.email }}</span>
+    </div>
+
+    {% if user.role == 'student' %}
+    <div class="info-item">
+      <span class="info-label"><i class="fas fa-hashtag" style="margin-right:6px"></i> Enrollment</span>
+      <span class="info-value">{{ user.enrollment_number or 'Not Assigned' }}</span>
+    </div>
+    
+    <div class="info-item">
+      <span class="info-label"><i class="fas fa-school" style="margin-right:6px"></i> Assigned Class</span>
+      <span class="info-value">{{ user.class_ref.name if user.class_ref else 'None' }}</span>
+    </div>
+    {% endif %}
+
+    {% if user.role == 'teacher' %}
+    <div class="info-item info-full">
+      <span class="info-label"><i class="fas fa-chalkboard-user" style="margin-right:6px"></i> Teaching Appointments</span>
+      <ul class="class-list">
+        {% for assoc in user.class_assignments %}
+        <li class="class-item">
+          <i class="fas fa-book"></i>
+          {{ assoc.class_ref.name }} — {{ assoc.subject.name }}
+        </li>
+        {% else %}
+        <li style="color: var(--text3); font-style: italic;">No classes assigned.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="margin-top: 40px; text-align: center;">
+    <a href="{{ url_for(session['user_role'] + '.' + session['user_role'] + '_dashboard') }}" class="btn btn-ghost btn-lg">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}

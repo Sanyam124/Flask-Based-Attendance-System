@@ -1,219 +1,145 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Manual Attendance</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --primary-color: #007bff;
-        --secondary-color: #6c757d;
-        --background-color: #f4f7f8;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-        --header-text-color: #ffffff;
-        --border-color: #dee2e6;
-      }
+{% extends "base.html" %}
+{% block title %}Manual Attendance — Smart Attendance{% endblock %}
 
-      body {
-        font-family: "Poppins", sans-serif;
-        background: var(--background-color);
-        margin: 0;
-        color: var(--text-color);
-      }
-      .container {
-        max-width: 900px;
-        margin: 30px auto;
-        padding: 20px;
-      }
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--border-color);
-      }
-      h2 {
-        margin: 0;
-        color: var(--primary-color);
-        font-weight: 700;
-        font-size: 2rem;
-      }
-      .btn {
-        padding: 12px 22px;
-        border-radius: 8px;
-        text-decoration: none;
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border: none;
-        cursor: pointer;
-        font-size: 0.9rem;
-      }
-      .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-      }
-      .btn-primary {
-        background: linear-gradient(135deg, #007bff, #0056b3);
-      }
-      .btn-secondary {
-        background: linear-gradient(135deg, #6c757d, #5a6268);
-      }
+{% block nav_links %}
+<a href="{{ url_for('teacher.teacher_dashboard') }}" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+<a href="{{ url_for('teacher.manual_attendance') }}" class="nav-link active"><i class="fas fa-pen-to-square"></i> Manual Attendance</a>
+<a href="{{ url_for('teacher.update_attendance') }}" class="nav-link"><i class="fas fa-clock-rotate-left"></i> Update Records</a>
+<a href="{{ url_for('teacher.teacher_attendance_reports') }}" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+{% endblock %}
 
-      .card {
-        background: var(--card-bg-color);
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-        margin-bottom: 30px;
-      }
-      .form-group {
-        margin-bottom: 20px;
-      }
-      label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: var(--subtle-text-color);
-      }
-      select {
-        width: 100%;
-        padding: 12px 15px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        font-size: 1rem;
-        font-family: "Poppins", sans-serif;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        padding: 15px;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-      }
-      th {
-        background-color: var(--primary-color);
-        color: var(--header-text-color);
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 1px;
-        font-weight: 600;
-      }
-       tbody tr:last-child td {
-        border-bottom: none;
-      }
-      input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-        accent-color: var(--primary-color);
-      }
-      .flash-messages {
-        list-style: none;
-        padding: 0;
-        margin-bottom: 20px;
-      }
-      .flash-messages li {
-        padding: 15px;
-        border-radius: 8px;
-        text-align: center;
-        font-weight: bold;
-      }
-      .flash-success {
-        background-color: #d4edda;
-        color: #155724;
-      }
-      .flash-danger {
-        background-color: #f8d7da;
-        color: #721c24;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <h2>Manual Attendance</h2>
-        <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary"
-          >Back to Dashboard</a
-        >
-      </header>
-      
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <ul class="flash-messages">
-            {% for category, message in messages %}
-                <li class="flash-{{ category }}">{{ message }}</li>
-            {% endfor %}
-            </ul>
-        {% endif %}
-      {% endwith %}
+{% block page_title %}Manual Attendance{% endblock %}
+{% block topbar_badge %}<i class="fas fa-pen" style="color:var(--primary);margin-right:6px"></i> Teacher{% endblock %}
 
-      <div class="card">
-        <form method="GET" action="{{ url_for('manual_attendance') }}">
-          <div class="form-group">
-            <label for="class-select">Select Class & Subject to Mark Attendance:</label>
-            <select name="class_teacher_id" id="class-select" required onchange="this.form.submit()">
-              <option value="">-- Please Select --</option>
-              {% for assoc in classes_taught %}
-              <option
-                value="{{ assoc.id }}"
-                {% if assoc.id == selected_ct_id %}selected{% endif %}
-              >
-                {{ assoc.class_ref.name }} ({{ assoc.subject.name }})
-              </option>
-              {% endfor %}
-            </select>
-          </div>
-        </form>
-      </div>
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar">T</div>
+  <div class="user-info"><div class="user-name">Teacher</div><div class="user-role">Teacher</div></div>
+</div>
+{% endblock %}
 
-      {% if selected_ct_id and students %}
-      <div class="card">
-        <form method="POST" action="{{ url_for('manual_attendance') }}">
-          <input type="hidden" name="class_teacher_id" value="{{ selected_ct_id }}">
-          <table>
-            <thead>
-              <tr>
-                <th>Student Name</th>
-                <th style="text-align: center; width: 20%;">Present</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for student in students %}
-              <tr>
-                <td>{{ student.username }}</td>
-                <td style="text-align: center;">
-                  <input
-                    type="checkbox"
-                    name="present_students"
-                    value="{{ student.id }}"
-                    {% if attendance_today.get(student.id) == 'present' %}checked{% endif %}
-                  />
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 30px;">Save Attendance</button>
-        </form>
-      </div>
-      {% elif selected_ct_id %}
-      <div class="card" style="text-align: center; color: var(--subtle-text-color);">
-        <p>This class currently has no active students assigned.</p>
-      </div>
-      {% endif %}
+{% block extra_css %}
+.class-picker {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.class-picker label { font-size:0.8rem;font-weight:700;color:var(--text2);white-space:nowrap;text-transform:uppercase;letter-spacing:0.5px; }
+.class-picker select { flex:1;min-width:220px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 14px;font-size:0.9rem;font-family:'Inter',sans-serif; }
+.class-picker select:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
+
+.student-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px; }
+.student-toggle {
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;display:flex;align-items:center;gap:14px;
+  cursor:pointer;transition:all 0.2s;position:relative;
+}
+.student-toggle:hover { background:var(--card-hover);border-color:rgba(99,102,241,0.3); }
+.student-toggle input[type=checkbox] { position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2; }
+.st-avatar {
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,var(--bg3),var(--bg2));
+  border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;font-weight:700;color:var(--text3);
+  transition:all 0.25s;flex-shrink:0;
+}
+.st-name { font-size:0.875rem;font-weight:600;color:var(--text2);transition:color 0.2s; }
+.st-status { font-size:0.72rem;color:var(--text3); }
+.check-icon { margin-left:auto;font-size:1.1rem;color:var(--text3);transition:all 0.2s; }
+
+.student-toggle:has(input:checked) {
+  background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.3);
+}
+.student-toggle:has(input:checked) .st-avatar { background:linear-gradient(135deg,var(--green),#34d399);border-color:transparent;color:white; }
+.student-toggle:has(input:checked) .st-name { color:var(--text); }
+.student-toggle:has(input:checked) .check-icon { color:var(--green); }
+
+.toolbar { display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap; }
+.toolbar-count { color:var(--text3);font-size:0.85rem; }
+{% endblock %}
+
+{% block content %}
+
+<!-- Class Selector -->
+<div class="class-picker">
+  <label><i class="fas fa-school" style="color:var(--primary);margin-right:6px"></i> Select Class</label>
+  <form method="GET" action="{{ url_for('teacher.manual_attendance') }}" style="display:flex;flex:1;gap:12px;align-items:center">
+    <select name="class_teacher_id" onchange="this.form.submit()">
+      <option value="">— Choose a class & subject —</option>
+      {% for assoc in classes_taught %}
+      <option value="{{ assoc.id }}" {% if assoc.id == selected_ct_id %}selected{% endif %}>
+        {{ assoc.class_ref.name }} — {{ assoc.subject.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+{% if selected_ct_id and students %}
+<div class="table-card" style="padding:24px">
+  <form method="POST" action="{{ url_for('teacher.manual_attendance') }}" id="att-form">
+    <input type="hidden" name="class_teacher_id" value="{{ selected_ct_id }}" />
+
+    <div class="toolbar">
+      <h3 style="font-size:1rem;font-weight:700;color:var(--text);flex:1"><i class="fas fa-users" style="color:var(--primary);margin-right:8px"></i>Mark Attendance</h3>
+      <button type="button" onclick="selectAll()" class="btn btn-ghost btn-sm"><i class="fas fa-check-double"></i> All Present</button>
+      <button type="button" onclick="selectNone()" class="btn btn-ghost btn-sm"><i class="fas fa-times"></i> Clear All</button>
+      <span class="toolbar-count" id="count-display">0 / {{ students|length }} present</span>
     </div>
-  </body>
-</html>
 
+    <div class="student-grid">
+      {% for student in students %}
+      <label class="student-toggle" title="Toggle present">
+        <input type="checkbox" name="present_students" value="{{ student.id }}"
+               {% if attendance_today.get(student.id) == 'present' %}checked{% endif %}
+               onchange="updateCount()" />
+        <div class="st-avatar">{{ student.username[0]|upper }}</div>
+        <div>
+          <div class="st-name">{{ student.username }}</div>
+          <div class="st-status">{{ student.enrollment_number or 'No Enroll.' }}</div>
+        </div>
+        <i class="fas fa-check-circle check-icon"></i>
+      </label>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="btn btn-success btn-lg btn-block">
+      <i class="fas fa-save"></i> Save Attendance for Today
+    </button>
+  </form>
+</div>
+
+{% elif selected_ct_id %}
+<div style="text-align:center;padding:60px;color:var(--text3)">
+  <i class="fas fa-user-slash" style="font-size:3rem;display:block;margin-bottom:16px;opacity:0.3"></i>
+  No active students in this class.
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function updateCount() {
+    const checked = document.querySelectorAll('input[name="present_students"]:checked').length;
+    const total   = document.querySelectorAll('input[name="present_students"]').length;
+    document.getElementById('count-display').textContent = `${checked} / ${total} present`;
+  }
+  function selectAll() {
+    document.querySelectorAll('input[name="present_students"]').forEach(cb => cb.checked = true);
+    updateCount();
+  }
+  function selectNone() {
+    document.querySelectorAll('input[name="present_students"]').forEach(cb => cb.checked = false);
+    updateCount();
+  }
+  updateCount();
+</script>
+{% endblock %}

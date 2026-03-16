@@ -1,108 +1,170 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Capture Face Samples</title>
-    <style>
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0;
-        padding: 0;
-        background: #f4f7fb;
-        color: #333;
-        text-align: center;
-      }
+{% extends "base.html" %}
 
-      header {
-        background: #4a90e2;
-        color: #fff;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
+{% block title %}Face Registration — Smart Attendance{% endblock %}
 
-      header h2 {
-        margin: 0;
-        font-size: 26px;
-        font-weight: bold;
-      }
+{% block extra_css %}
+.video-frame {
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 16/9;
+  border-radius: var(--radius);
+  border: 2px solid rgba(99,102,241,0.3);
+  background: #0a0c14;
+  display: block;
+  object-fit: cover;
+}
+.capture-status {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pulse-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: pulse 1.2s ease infinite;
+  flex-shrink: 0;
+}
+.pulse-dot.active { background: var(--green); }
+@keyframes pulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+.instruction-card {
+  background: rgba(99,102,241,0.08);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.step { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
+.step:last-child { margin-bottom: 0; }
+.step-num {
+  width: 28px; height: 28px;
+  background: var(--primary);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 700; color: white;
+  flex-shrink: 0;
+}
+.step-text { font-size: 0.875rem; color: var(--text2); line-height: 1.6; padding-top: 3px; }
+{% endblock %}
 
-      main {
-        margin: 30px auto;
-        padding: 20px;
-        max-width: 800px;
-        background: #fff;
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
+{% block nav_links %}
+<a href="{{ url_for('student.student_dashboard') }}" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+<a href="{{ url_for('student.capture_samples') }}" class="nav-link active"><i class="fas fa-camera"></i> Face Registration</a>
+{% endblock %}
 
-      img {
-        margin: 20px 0;
-        border-radius: 10px;
-        border: 3px solid #4a90e2;
-        max-width: 100%;
-        height: auto;
-      }
+{% block page_title %}Face Registration{% endblock %}
+{% block topbar_badge %}<i class="fas fa-shield-alt" style="color:var(--green);margin-right:6px"></i> One-time Setup{% endblock %}
 
-      p {
-        font-size: 16px;
-        color: #555;
-      }
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar">{{ username[0]|upper }}</div>
+  <div class="user-info">
+    <div class="user-name">{{ username }}</div>
+    <div class="user-role">Student</div>
+  </div>
+</div>
+{% endblock %}
 
-      .loader {
-        margin: 20px auto;
-        border: 6px solid #f3f3f3;
-        border-top: 6px solid #4a90e2;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-      }
+{% block content %}
+<div style="display:grid;grid-template-columns:3fr 2fr;gap:24px;align-items:start">
 
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
+  <!-- Left: Video -->
+  <div>
+    <div class="capture-status" style="margin-bottom:16px">
+      <div class="pulse-dot active" id="status-dot"></div>
+      <div>
+        <div style="font-weight:700;color:var(--text);font-size:0.9rem" id="status-title">Camera Active — Capturing...</div>
+        <div style="font-size:0.78rem;color:var(--text3)" id="status-sub">Stay still and look directly at the camera</div>
+      </div>
+    </div>
+
+    <img src="{{ url_for('student.student_video_feed') }}"
+         class="video-frame"
+         alt="Live Camera Feed"
+         id="video-feed" />
+
+    <div style="margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:0.8rem;color:var(--text2);font-weight:600">Capture Progress</span>
+        <span style="font-size:0.8rem;color:var(--text3)" id="progress-text">Checking...</span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar good" id="progress-bar" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Instructions -->
+  <div>
+    <div class="instruction-card">
+      <div style="font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px">
+        <i class="fas fa-info-circle" style="color:var(--primary)"></i>
+        How it works
+      </div>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Admin issued you a token — you are authorized to register.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Look directly at the camera. Keep your face fully visible.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">The system captures <strong>50 samples</strong> while verifying it's only your face.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">If another face appears, registration <strong style="color:var(--red)">aborts automatically</strong>.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-text">You'll be redirected once capture is complete. ✅</div>
+      </div>
+    </div>
+
+    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius);padding:16px 20px">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--red);margin-bottom:8px"><i class="fas fa-exclamation-triangle"></i> Security Notice</div>
+      <ul style="font-size:0.8rem;color:var(--text3);padding-left:16px;line-height:1.8">
+        <li>Only your face must appear during capture</li>
+        <li>Do not hold up photos or use a phone screen</li>
+        <li>Be in a well-lit environment</li>
+        <li>Registration is one-time — admin must reset to redo</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function checkStatus() {
+    fetch('/student/check_capture_status')
+      .then(r => r.json())
+      .then(data => {
+        if (data.completed) {
+          document.getElementById('status-dot').classList.remove('active');
+          document.getElementById('status-title').textContent = '✅ Registration Complete!';
+          document.getElementById('status-sub').textContent = 'Redirecting to dashboard...';
+          document.getElementById('progress-bar').style.width = '100%';
+          document.getElementById('progress-text').textContent = '50 / 50';
+          setTimeout(() => { window.location.href = '/student/dashboard'; }, 1500);
+        } else {
+          document.getElementById('progress-text').textContent = 'Capturing...';
+          setTimeout(checkStatus, 2000);
         }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-    </style>
+      })
+      .catch(() => setTimeout(checkStatus, 3000));
+  }
 
-    <script>
-      function checkStatus(username) {
-        fetch(`/student/check_capture_status/${username}`)
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.completed) {
-              alert("✅ Face samples captured successfully!");
-              window.location.href = "/student/dashboard";
-            } else {
-              setTimeout(() => checkStatus(username), 2000);
-            }
-          });
-      }
-
-      window.onload = function () {
-        const username = "{{ username }}";
-        checkStatus(username);
-      };
-    </script>
-  </head>
-  <body>
-    <header>
-      <h2>Capturing Face Samples</h2>
-    </header>
-
-    <main>
-      <h3>Student: {{ username }}</h3>
-      <img src="{{ url_for('student_video_feed') }}" alt="Live Video Feed" />
-
-      <div class="loader"></div>
-
-      <p>
-        Please wait while we capture your face samples. The page will redirect
-        automatically once done.
-      </p>
-    </main>
-  </body>
-</html>
+  window.onload = checkStatus;
+</script>
+{% endblock %}

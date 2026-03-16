@@ -1,239 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Teacher Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --primary-color: #007bff;
-        --secondary-color: #6c757d;
-        --background-color: #f4f7f8;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-      }
+{% extends "base.html" %}
 
-      body {
-        font-family: "Poppins", sans-serif;
-        margin: 0;
-        background-color: var(--background-color);
-        color: var(--text-color);
-      }
-      .container {
-        /* UPDATED: Increased max-width for a more spacious layout */
-        max-width: 1100px;
-        margin: 30px auto;
-        padding: 20px;
-      }
-      header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 30px;
-        background: var(--card-bg-color);
-        padding: 20px 30px;
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-      }
-      .welcome-text h2 {
-        margin: 0;
-        color: var(--primary-color);
-        font-weight: 700;
-        font-size: 2rem;
-      }
-      .welcome-text p {
-        margin: 5px 0 0;
-        color: var(--secondary-color);
-      }
-      .header-actions {
-        position: relative;
-      }
-      .profile-pic {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background-color: var(--primary-color);
-        color: white;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 2rem;
-        font-weight: bold;
-        cursor: pointer;
-        border: 3px solid white;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-      .profile-dropdown {
-        display: none;
-        position: absolute;
-        right: 0;
-        top: 75px;
-        background-color: white;
-        min-width: 160px;
-        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-        z-index: 1;
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      .profile-dropdown a {
-        color: black;
-        padding: 12px 16px;
-        text-decoration: none;
-        display: block;
-      }
-      .profile-dropdown a:hover {
-        background-color: #f1f1f1;
-      }
+{% block title %}Teacher Dashboard — Smart Attendance{% endblock %}
 
-      .dashboard-grid {
-        display: grid;
-        /* UPDATED: Adjusted grid for a better look on wider screens */
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 25px;
-      }
-      .card {
-        background: var(--card-bg-color);
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-        transition: transform 0.3s, box-shadow 0.3s;
-      }
-      .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-      }
-      .card h3 {
-        margin: 0 0 10px;
-        color: var(--primary-color);
-        font-weight: 700;
-        font-size: 1.5rem;
-      }
-      .card p {
-        margin-bottom: 25px;
-        font-size: 1rem;
-        color: var(--subtle-text-color);
-        line-height: 1.6;
-      }
-      .button-group {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-      .button {
-        display: block;
-        padding: 14px 20px;
-        text-decoration: none;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        font-weight: 600;
-        text-align: center;
-        color: #fff;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      }
-      .button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-      }
-      .button.primary {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-      }
-      .button.secondary {
-        background: linear-gradient(135deg, #007bff, #0056b3);
-      }
-      .button.tertiary {
-        background: linear-gradient(135deg, #28a745, #218838);
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <div class="welcome-text">
-          <h2>Teacher Dashboard</h2>
-          <p>Welcome, {{ teacher.username }}!</p>
-        </div>
-        <div class="header-actions">
-          <div class="profile-pic" id="profile-pic-btn">
-            <span>{{ teacher.username[0]|upper }}</span>
-          </div>
-          <div id="profile-dropdown" class="profile-dropdown">
-            <a href="{{ url_for('view_profile', user_id=teacher.id) }}"
-              >View Profile</a
-            >
-            <a href="{{ url_for('logout') }}">Logout</a>
-          </div>
-        </div>
-      </header>
+{% block nav_links %}
+<span class="nav-section-title">Attendance</span>
+<a href="{{ url_for('teacher.teacher_dashboard') }}" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a>
+<a href="{{ url_for('teacher.manual_attendance') }}" class="nav-link"><i class="fas fa-pen-to-square"></i> Manual Entry</a>
+<a href="{{ url_for('teacher.update_attendance') }}" class="nav-link"><i class="fas fa-clock-rotate-left"></i> Update Records</a>
+<a href="{{ url_for('teacher.teacher_attendance_reports') }}" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+<span class="nav-section-title">Smart</span>
+{% for ca in classes_taught %}
+<a href="{{ url_for('teacher.teacher_attendance', class_teacher_id=ca.id) }}" class="nav-link">
+  <i class="fas fa-camera"></i> {{ ca.class_ref.name }} · {{ ca.subject.name }}
+</a>
+{% endfor %}
+{% endblock %}
 
-      <div class="dashboard-grid">
-        <div class="card">
-          <h3>Attendance Tools</h3>
-          <p>
-            Mark attendance manually, update past records, or view detailed
-            reports for your classes.
-          </p>
-          <div class="button-group">
-            <a
-              href="{{ url_for('manual_attendance') }}"
-              class="button secondary"
-              >Manual Attendance</a
-            >
-            <a href="{{ url_for('update_attendance') }}" class="button tertiary"
-              >Update Records</a
-            >
-            <a
-              href="{{ url_for('teacher_attendance_reports') }}"
-              class="button secondary"
-              >View Reports</a
-            >
-          </div>
-        </div>
-        <div class="card">
-          <h3>Smart Attendance</h3>
-          <p>
-            Use facial recognition to take attendance automatically for a new
-            session.
-          </p>
-          <div class="button-group">
-            {% for class_assoc in classes_taught %}
-            <a
-              href="{{ url_for('teacher_attendance', class_teacher_id=class_assoc.id) }}"
-              class="button primary"
-            >
-              Start for {{ class_assoc.class_ref.name }} ({{
-              class_assoc.subject.name }})
-            </a>
-            {% else %}
-            <p>You are not assigned to any classes yet.</p>
-            {% endfor %}
-          </div>
-        </div>
+{% block page_title %}Teacher Dashboard{% endblock %}
+{% block topbar_badge %}<i class="fas fa-chalkboard-teacher" style="color:var(--accent);margin-right:6px"></i> {{ teacher.username }}{% endblock %}
+
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar">{{ teacher.username[0]|upper }}</div>
+  <div class="user-info">
+    <div class="user-name">{{ teacher.username }}</div>
+    <div class="user-role">Teacher</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Welcome Banner -->
+<div style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(34,211,238,0.08));border:1px solid rgba(99,102,241,0.2);border-radius:var(--radius);padding:28px 32px;margin-bottom:28px;display:flex;align-items:center;gap:20px">
+  <div style="width:60px;height:60px;background:linear-gradient(135deg,#6366f1,#22d3ee);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:white;flex-shrink:0">
+    <i class="fas fa-chalkboard-teacher"></i>
+  </div>
+  <div>
+    <h2 style="font-size:1.4rem;font-weight:800;color:var(--text);margin-bottom:4px">Welcome back, {{ teacher.username }}! 👋</h2>
+    <p style="color:var(--text2);font-size:0.9rem">You are teaching <strong style="color:var(--primary)">{{ classes_taught|length }}</strong> class{% if classes_taught|length != 1 %}es{% endif %}. Choose an action below to get started.</p>
+  </div>
+</div>
+
+<!-- Action Cards Row -->
+<div class="grid-2" style="margin-bottom:28px">
+
+  <!-- Smart Attendance Card -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:44px;height:44px;background:rgba(34,211,238,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:1.2rem"><i class="fas fa-camera"></i></div>
+      <div>
+        <h3 style="font-size:1rem;font-weight:700;color:var(--text)">Smart Attendance</h3>
+        <p style="font-size:0.78rem;color:var(--text3)">Face recognition — auto-mark present</p>
       </div>
     </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      {% for ca in classes_taught %}
+      <a href="{{ url_for('teacher.teacher_attendance', class_teacher_id=ca.id) }}" class="btn btn-accent btn-block">
+        <i class="fas fa-play"></i>
+        Start — {{ ca.class_ref.name }} ({{ ca.subject.name }})
+      </a>
+      {% else %}
+      <p style="color:var(--text3);font-size:0.85rem;padding:12px 0">Not assigned to any classes yet.</p>
+      {% endfor %}
+    </div>
+  </div>
 
-    <script>
-      const profilePicBtn = document.getElementById("profile-pic-btn");
-      const dropdown = document.getElementById("profile-dropdown");
+  <!-- Manual Tools Card -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:44px;height:44px;background:rgba(99,102,241,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:1.2rem"><i class="fas fa-pen-to-square"></i></div>
+      <div>
+        <h3 style="font-size:1rem;font-weight:700;color:var(--text)">Manual Tools</h3>
+        <p style="font-size:0.78rem;color:var(--text3)">Mark, update, and export records</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <a href="{{ url_for('teacher.manual_attendance') }}" class="btn btn-primary btn-block">
+        <i class="fas fa-check-square"></i> Mark Attendance Manually
+      </a>
+      <a href="{{ url_for('teacher.update_attendance') }}" class="btn btn-ghost btn-block">
+        <i class="fas fa-clock-rotate-left"></i> Correct Past Records
+      </a>
+      <a href="{{ url_for('teacher.teacher_attendance_reports') }}" class="btn btn-ghost btn-block">
+        <i class="fas fa-chart-bar"></i> View Class Reports
+      </a>
+    </div>
+  </div>
 
-      profilePicBtn.addEventListener("click", function () {
-        dropdown.style.display =
-          dropdown.style.display === "block" ? "none" : "block";
-      });
+</div>
 
-      // Close dropdown if clicked outside
-      window.addEventListener("click", function (event) {
-        if (
-          !profilePicBtn.contains(event.target) &&
-          !dropdown.contains(event.target)
-        ) {
-          dropdown.style.display = "none";
-        }
-      });
-    </script>
-  </body>
-</html>
+<!-- Classes Table -->
+<div class="table-card">
+  <div class="table-header">
+    <h3><i class="fas fa-school" style="color:var(--primary);margin-right:8px"></i>Your Assigned Classes</h3>
+    <span class="badge badge-purple">{{ classes_taught|length }} classes</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Class</th>
+        <th>Subject</th>
+        <th>Start Smart Attendance</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ca in classes_taught %}
+      <tr>
+        <td><strong>{{ ca.class_ref.name }}</strong></td>
+        <td><span class="badge badge-cyan">{{ ca.subject.name }}</span></td>
+        <td>
+          <a href="{{ url_for('teacher.teacher_attendance', class_teacher_id=ca.id) }}" class="btn btn-accent btn-sm">
+            <i class="fas fa-camera"></i> Start Session
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="3" style="text-align:center;padding:36px;color:var(--text3)">
+          <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:10px"></i>
+          No classes assigned yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

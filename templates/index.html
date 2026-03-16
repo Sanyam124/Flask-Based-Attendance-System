@@ -1,139 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Smart Attendance System</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --primary-color: #6a82fb;
-        --secondary-color: #fc5c7d;
-        --background-color: #f4f7f8;
-        --card-bg-color: #ffffff;
-        --text-color: #333;
-        --subtle-text-color: #6c757d;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Attendance System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Inter',sans-serif;
+      background:#0f1117;
+      min-height:100vh;
+      display:flex;align-items:center;justify-content:center;
+      padding:20px;overflow:hidden;position:relative;
+    }
+    body::before,body::after{content:'';position:absolute;border-radius:50%;filter:blur(100px);opacity:0.15;pointer-events:none;}
+    body::before{width:500px;height:500px;background:radial-gradient(circle,#6366f1,transparent);top:-120px;left:-120px;animation:f1 9s ease-in-out infinite;}
+    body::after{width:450px;height:450px;background:radial-gradient(circle,#22d3ee,transparent);bottom:-100px;right:-100px;animation:f2 11s ease-in-out infinite;}
+    @keyframes f1{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px)}}
+    @keyframes f2{0%,100%{transform:translate(0,0)}50%{transform:translate(-30px,-40px)}}
 
-      body {
-        font-family: "Poppins", sans-serif;
-        margin: 0;
-        padding: 20px;
-        background: linear-gradient(
-          135deg,
-          var(--primary-color),
-          var(--secondary-color)
-        );
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        box-sizing: border-box;
-      }
+    .wrapper{
+      max-width:480px;width:100%;
+      background:#1e2235;
+      border:1px solid rgba(255,255,255,0.07);
+      border-radius:24px;
+      padding:52px 48px;
+      text-align:center;
+      box-shadow:0 24px 60px rgba(0,0,0,0.5);
+      animation:up 0.6s ease forwards;
+      opacity:0;transform:translateY(24px);
+    }
+    @keyframes up{to{opacity:1;transform:translateY(0)}}
 
-      .container {
-        background: var(--card-bg-color);
-        padding: 40px 50px;
-        border-radius: 20px;
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-        text-align: center;
-        max-width: 500px;
-        width: 100%;
-        opacity: 0;
-        transform: translateY(-20px);
-        animation: fadeIn 1s ease-in-out forwards;
-      }
+    .brand-icon{
+      width:72px;height:72px;
+      background:linear-gradient(135deg,#6366f1,#22d3ee);
+      border-radius:20px;
+      display:inline-flex;align-items:center;justify-content:center;
+      font-size:30px;color:white;margin-bottom:24px;
+      box-shadow:0 8px 28px rgba(99,102,241,0.4);
+    }
+    h1{font-size:2rem;font-weight:800;color:#e4e6f0;margin-bottom:10px;}
+    h1 span{background:linear-gradient(90deg,#6366f1,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .subtitle{color:#9ca3af;font-size:0.95rem;line-height:1.7;margin-bottom:44px;}
 
-      @keyframes fadeIn {
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
+    .features{
+      display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:44px;text-align:left;
+    }
+    .feature{
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:12px;padding:16px;
+      display:flex;flex-direction:column;gap:8px;
+      transition:all 0.25s;
+    }
+    .feature:hover{background:rgba(99,102,241,0.08);border-color:rgba(99,102,241,0.3);}
+    .feature i{font-size:1.2rem;color:#6366f1;}
+    .feature-title{font-size:0.82rem;font-weight:600;color:#e4e6f0;}
+    .feature-desc{font-size:0.75rem;color:#6b7280;line-height:1.5;}
 
-      .header {
-        margin-bottom: 30px;
-      }
+    .actions{display:flex;flex-direction:column;gap:14px;}
+    .btn{
+      display:block;padding:15px;border-radius:12px;
+      font-size:1rem;font-weight:700;font-family:'Inter',sans-serif;
+      text-decoration:none;transition:all 0.25s;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+    }
+    .btn-primary{background:linear-gradient(135deg,#6366f1,#4f52cc);color:white;}
+    .btn-primary:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(99,102,241,0.45);}
+    .btn-outline{background:transparent;color:#9ca3af;border:1px solid rgba(255,255,255,0.1);}
+    .btn-outline:hover{background:rgba(255,255,255,0.05);color:#e4e6f0;border-color:rgba(255,255,255,0.2);}
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="brand-icon"><i class="fas fa-user-check"></i></div>
+    <h1>Smart<span> Attendance</span></h1>
+    <p class="subtitle">AI-powered face recognition attendance system for modern educational institutions.</p>
 
-      .header svg {
-        width: 60px;
-        height: 60px;
-        margin-bottom: 15px;
-        color: var(--primary-color);
-      }
-
-      .header h1 {
-        color: var(--text-color);
-        margin: 0 0 10px;
-        font-weight: 700;
-        font-size: 2rem;
-      }
-
-      .header p {
-        color: var(--subtle-text-color);
-        margin: 0;
-        font-size: 1rem;
-      }
-
-      .actions-container {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
-      .btn {
-        display: block;
-        padding: 15px 20px;
-        font-size: 1rem;
-        color: #fff;
-        background: linear-gradient(
-          135deg,
-          var(--primary-color),
-          var(--secondary-color)
-        );
-        border: none;
-        border-radius: 10px;
-        text-decoration: none;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      }
-
-      .btn:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(106, 130, 251, 0.4);
-        background: linear-gradient(135deg, #7b91ff, #fd718f);
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-        >
-          <path
-            d="M17 11h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2a2 2 0 012-2zm-2-4a4 4 0 100 8 4 4 0 000-8zm-4 4a2 2 0 11-4 0 2 2 0 014 0zm2-4a4 4 0 100 8 4 4 0 000-8zM5 11h2a2 2 0 012 2v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2 2 0 012-2z"
-          />
-        </svg>
-        <h1>Smart Attendance System</h1>
-        <p>Your seamless solution for tracking attendance.</p>
+    <div class="features">
+      <div class="feature">
+        <i class="fas fa-shield-alt"></i>
+        <div class="feature-title">Proxy-Proof</div>
+        <div class="feature-desc">Face consistency checks prevent fraud</div>
       </div>
-
-      <div class="actions-container">
-        <a href="{{ url_for('login') }}" class="btn">Login to Your Account</a>
-        <a href="{{ url_for('register') }}" class="btn"
-          >Register a New Account</a
-        >
+      <div class="feature">
+        <i class="fas fa-bolt"></i>
+        <div class="feature-title">Real-Time</div>
+        <div class="feature-desc">Instant recognition with live camera</div>
+      </div>
+      <div class="feature">
+        <i class="fas fa-chart-line"></i>
+        <div class="feature-title">Analytics</div>
+        <div class="feature-desc">Detailed reports & attendance trends</div>
+      </div>
+      <div class="feature">
+        <i class="fas fa-lock"></i>
+        <div class="feature-title">Secure</div>
+        <div class="feature-desc">Admin-controlled access & tokens</div>
       </div>
     </div>
-  </body>
+
+    <div class="actions">
+      <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+        <i class="fas fa-sign-in-alt"></i> Login to Your Account
+      </a>
+      <a href="{{ url_for('auth.register') }}" class="btn btn-outline">
+        <i class="fas fa-user-plus"></i> Create New Account
+      </a>
+    </div>
+  </div>
+</body>
 </html>
