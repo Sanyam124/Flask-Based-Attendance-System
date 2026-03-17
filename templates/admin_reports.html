@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Attendance Reports</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --background-color: #f4f7f8;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+        --header-text-color: #ffffff;
+        --border-color: #dee2e6;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background: var(--background-color);
+        margin: 0;
+        color: var(--text-color);
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 30px auto;
+        padding: 20px;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      header h2 {
+        margin: 0;
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 2rem;
+      }
+
+      .btn {
+        padding: 12px 22px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+      }
+
+      .table-container {
+        background: var(--card-bg-color);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      th {
+        background-color: var(--primary-color);
+        color: var(--header-text-color);
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1px;
+        font-weight: 600;
+      }
+
+      tbody tr {
+        transition: background-color 0.25s ease;
+      }
+
+      tbody tr:hover {
+        background-color: #f1f5ff;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      td {
+        color: #555;
+      }
+
+      td strong {
+        color: #333;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h2>Student Attendance Reports</h2>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary"
+          >Back to Dashboard</a
+        >
+      </header>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: center">Sr. No.</th>
+              <th>Enrollment No.</th>
+              <th>Student Name</th>
+              <th>Class</th>
+              <th style="text-align: center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in students %}
+            <tr>
+              <td style="text-align: center">{{ loop.index }}</td>
+              <td><strong>{{ student.enrollment_number or 'N/A' }}</strong></td>
+              <td>{{ student.username }}</td>
+              <td>
+                {{ student.class_ref.name if student.class_ref else '-' }}
+              </td>
+              <td style="text-align: center">
+                <a
+                  href="{{ url_for('admin_export_attendance', student_id=student.id) }}"
+                  class="btn btn-primary"
+                  >Export CSV</a
+                >
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td
+                colspan="5"
+                style="text-align: center; padding: 40px; color: #888"
+              >
+                There are no students in the system to generate reports for.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

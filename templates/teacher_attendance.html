@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Live Attendance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --danger-color: #dc3545;
+        --background-color: #f4f7f8;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+        --header-text-color: #ffffff;
+        --border-color: #dee2e6;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        font-family: "Poppins", sans-serif;
+        background: var(--background-color);
+        color: var(--text-color);
+      }
+      .container {
+        height: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card-bg-color);
+        padding: 15px 25px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        flex-shrink: 0;
+      }
+      h1 {
+        margin: 0;
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 1.8rem;
+      }
+      .session-info p {
+        margin: 2px 0;
+        text-align: right;
+      }
+      .main-content {
+        flex-grow: 1;
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+        overflow: hidden;
+      }
+      .video-container {
+        flex: 3;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #000;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      #remoteVideo {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      .attendance-list {
+        flex: 1;
+        min-width: 300px;
+        background: var(--card-bg-color);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .attendance-list h2 {
+        margin-top: 0;
+        color: var(--primary-color);
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+      .table-wrapper {
+        flex-grow: 1;
+        overflow-y: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+      }
+      th {
+        background-color: var(--primary-color);
+        color: var(--header-text-color);
+        font-size: 12px;
+        text-transform: uppercase;
+        position: sticky;
+        top: 0;
+      }
+      .status-present {
+        color: #155724;
+        font-weight: bold;
+      }
+      .button-group {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+      .btn {
+        display: block;
+        padding: 12px 18px;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        text-align: center;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        font-family: "Poppins", sans-serif;
+        font-size: 1rem;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+      .btn-danger {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+      }
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+      }
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .modal-content {
+        background: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        width: 90%;
+        max-width: 400px;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 25px;
+      }
+      .modal-btn {
+        padding: 10px 25px;
+      }
+      .modal-btn-confirm {
+        background: var(--danger-color);
+      }
+      .modal-btn-cancel {
+        background: var(--secondary-color);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Live Attendance Session (#{{ session_number }})</h1>
+        <div class="session-info">
+          <p><strong>Class:</strong> {{ association.class_ref.name }}</p>
+          <p><strong>Subject:</strong> {{ association.subject.name }}</p>
+        </div>
+      </header>
+      <div class="main-content">
+        <div class="video-container">
+          <video id="remoteVideo" autoplay playsinline></video>
+        </div>
+        <div class="attendance-list">
+          <h2>Attendance Status</h2>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-status-body">
+                <tr>
+                  <td colspan="2">Waiting for camera connection...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="button-group">
+            <button id="end-session-btn" class="btn btn-danger">
+              End Session & Mark Absentees
+            </button>
+            <a
+              href="{{ url_for('teacher_dashboard') }}"
+              class="btn btn-secondary"
+              >Back to Dashboard</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirm-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>Confirm Action</h3>
+        <p>
+          Are you sure you want to end the session? All unmarked students will
+          be recorded as absent.
+        </p>
+        <div class="modal-actions">
+          <button id="modal-cancel-btn" class="btn modal-btn-cancel">
+            Cancel
+          </button>
+          <button id="modal-confirm-btn" class="btn modal-btn-confirm">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script>
+      const remoteVideo = document.getElementById("remoteVideo");
+      const attendanceTbody = document.getElementById("attendance-status-body");
+      const assocId = {{ association.id }};
+      const sessionNumber = {{ session_number }};
+      const socket = io();
+      let peerConnection;
+
+      const config = {
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      };
+
+      socket.emit("teacher-ready");
+
+      socket.on("offer-from-camera", (offer) => {
+        peerConnection = new RTCPeerConnection(config);
+        peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+
+        peerConnection.createAnswer()
+          .then((answer) => peerConnection.setLocalDescription(answer))
+          .then(() => {
+            socket.emit("answer-from-teacher", peerConnection.localDescription);
+          });
+
+        peerConnection.ontrack = (event) => {
+          remoteVideo.srcObject = event.streams[0];
+          attendanceTbody.innerHTML = '<tr><td colspan="2">Camera connected. Recognizing faces...</td></tr>';
+        };
+
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.emit("candidate-from-teacher", event.candidate);
+          }
+        };
+      });
+
+      socket.on("candidate-from-camera", (candidate) => {
+        if (peerConnection) {
+          peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+      });
+
+      setInterval(() => {
+        if (!remoteVideo.srcObject || remoteVideo.paused || remoteVideo.ended) return;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = remoteVideo.videoWidth;
+        canvas.height = remoteVideo.videoHeight;
+        canvas.getContext("2d").drawImage(remoteVideo, 0, 0, canvas.width, canvas.height);
+        const imageData = canvas.toDataURL("image/jpeg");
+
+        fetch("/teacher/recognize_frame", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: imageData, assoc_id: assocId, session_number: sessionNumber }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.present && data.present.length > 0) {
+              updateTable(data.present);
+            }
+          });
+      }, 5000);
+
+      const markedStudents = new Set();
+      function updateTable(presentList) {
+          if (attendanceTbody.innerHTML.includes('...')) {
+              attendanceTbody.innerHTML = '';
+          }
+          presentList.forEach((record) => {
+              if (!markedStudents.has(record.username)) {
+                  markedStudents.add(record.username);
+                  const row = `<tr><td class="status-present">${record.username}</td><td>${record.timestamp}</td></tr>`;
+                  attendanceTbody.innerHTML += row;
+              }
+          });
+      }
+
+      const endSessionBtn = document.getElementById('end-session-btn');
+      const confirmModal = document.getElementById('confirm-modal');
+      const confirmBtn = document.getElementById('modal-confirm-btn');
+      const cancelBtn = document.getElementById('modal-cancel-btn');
+
+      endSessionBtn.addEventListener('click', function() {
+          confirmModal.style.display = 'flex';
+      });
+
+      cancelBtn.addEventListener('click', function() {
+          confirmModal.style.display = 'none';
+      });
+
+      confirmBtn.addEventListener('click', function() {
+          confirmModal.style.display = 'none';
+
+          fetch(`/teacher/end_session/${assocId}/${sessionNumber}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.status === "ended" && data.redirect_url) {
+                  window.location.href = data.redirect_url;
+              } else {
+                  alert(data.message || "An error occurred while ending the session.");
+              }
+          })
+          .catch(error => {
+              console.error("Error ending session:", error);
+              alert("A network error occurred.");
+          });
+      });
+    </script>
+  </body>
+</html>

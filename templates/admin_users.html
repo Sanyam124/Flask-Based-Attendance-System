@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF--8" />
+    <title>Manage Users</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --background-color: #f4f7f8;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+        --header-text-color: #ffffff;
+        --border-color: #dee2e6;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background: var(--background-color);
+        margin: 0;
+        color: var(--text-color);
+      }
+      .container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 20px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+      }
+      h2 {
+        margin: 0;
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 2rem;
+      }
+      .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+      }
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+      }
+      .btn-danger {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+      }
+      .btn-warning {
+        background: linear-gradient(135deg, #ffc107, #e0a800);
+        color: #212529;
+      }
+      .btn-success {
+        background: linear-gradient(135deg, #28a745, #218838);
+      }
+
+      .table-container {
+        background: var(--card-bg-color);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        color: #555;
+      }
+      th {
+        background-color: var(--primary-color);
+        color: var(--header-text-color);
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1px;
+        font-weight: 600;
+      }
+      tbody tr {
+        transition: background-color 0.25s ease;
+      }
+      tbody tr.inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      tbody tr:not(.inactive):hover {
+        background-color: #f1f5ff;
+      }
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+      .actions .action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .actions .action-buttons form {
+        margin: 0;
+      }
+      .status-badge {
+        font-size: 0.8em;
+        padding: 4px 10px;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+      }
+      .status-active {
+        background-color: #28a745;
+      }
+      .status-inactive {
+        background-color: #dc3545;
+      }
+      .flash-messages {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 20px;
+      }
+      .flash-messages li {
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .flash-success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .flash-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h2>Manage Users</h2>
+        <div>
+          <a href="{{ url_for('admin_add_user') }}" class="btn btn-primary"
+            >Add New User</a
+          >
+          <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary"
+            >Back to Dashboard</a
+          >
+        </div>
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <ul class="flash-messages">
+        {% for category, message in messages %}
+        <li class="flash-{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %} {% endwith %}
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: center">Sr. No.</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th style="text-align: center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr class="{{ 'inactive' if not user.is_active }}">
+              <td style="text-align: center">{{ loop.index }}</td>
+              <td>{{ user.username }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.role.title() }}</td>
+              <td>
+                {% if user.is_active %}
+                <span class="status-badge status-active">Active</span>
+                {% else %}
+                <span class="status-badge status-inactive">Inactive</span>
+                {% endif %}
+              </td>
+              <td class="actions" style="text-align: center">
+                <div class="action-buttons">
+                  {% if user.is_active %}
+                  <a
+                    href="{{ url_for('admin_update_user', user_id=user.id) }}"
+                    class="btn btn-warning"
+                    >Update</a
+                  >
+                  <form
+                    action="{{ url_for('admin_delete_user', user_id=user.id) }}"
+                    method="POST"
+                    onsubmit="return confirm('Are you sure you want to deactivate this user?');"
+                  >
+                    <button type="submit" class="btn btn-warning">
+                      Deactivate
+                    </button>
+                  </form>
+                  {% else %}
+                  <form
+                    action="{{ url_for('admin_reactivate_user', user_id=user.id) }}"
+                    method="POST"
+                  >
+                    <button type="submit" class="btn btn-success">
+                      Reactivate
+                    </button>
+                  </form>
+                  {% endif %}
+
+                  <!-- Permanent Delete button ONLY for students -->
+                  {% if user.role == 'student' %}
+                  <form
+                    action="{{ url_for('admin_delete_student', user_id=user.id) }}"
+                    method="POST"
+                    onsubmit="return confirm('WARNING: This will permanently delete the student and all their data (attendance, face samples). This cannot be undone. Are you sure?');"
+                  >
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

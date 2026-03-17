@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Camera Client</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      :root {
+        --dark-bg: #2c3e50;
+        --light-bg: #ffffff;
+        --dark-text: #ecf0f1;
+        --light-text: #333;
+        --primary-accent: #3498db;
+        --primary-accent-hover: #2980b9;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        text-align: center;
+        background: var(--dark-bg);
+        color: var(--dark-text);
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        box-sizing: border-box;
+        transition: background-color 0.3s ease;
+      }
+      body.light-mode-on {
+        background: var(--light-bg);
+        color: var(--light-text);
+      }
+      body.light-mode-on h1 {
+        color: var(--light-text);
+      }
+      video,
+      #streaming-canvas {
+        display: none;
+      }
+      #display-canvas {
+        width: 100%;
+        max-width: 640px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        background: #000;
+        transition: all 0.3s ease;
+      }
+      #display-canvas.shrunk {
+        max-width: 200px;
+        border: 2px solid var(--primary-accent);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+      }
+      h1 {
+        color: var(--dark-text);
+        margin-bottom: 10px;
+        transition: color 0.3s ease;
+      }
+      #status {
+        font-size: 1.2rem;
+        margin-top: 20px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        display: inline-block;
+      }
+      .diagnostics {
+        margin-top: 15px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        font-size: 0.8rem;
+        text-align: left;
+        width: 100%;
+        max-width: 400px;
+        box-sizing: border-box;
+      }
+      .diagnostics p {
+        margin: 4px 0;
+        color: #bdc3c7;
+      }
+      .diagnostics strong {
+        color: #ecf0f1;
+      }
+      .diagnostics .supported {
+        color: #2ecc71;
+      }
+      .diagnostics .unsupported {
+        color: #e74c3c;
+      }
+      .controls {
+        margin-top: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+        align-items: center;
+      }
+      .btn {
+        padding: 12px 24px;
+        font-size: 1rem;
+        background-color: var(--primary-accent);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      .btn:hover {
+        background-color: var(--primary-accent-hover);
+      }
+      .slider-control {
+        display: none;
+        margin-top: 15px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+      }
+      .slider-control label {
+        margin-right: 10px;
+        font-weight: bold;
+      }
+      .slider-control input[type="range"] {
+        width: 150px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Attendance Camera</h1>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="display-canvas"></canvas>
+    <canvas id="streaming-canvas"></canvas>
+    <div id="status">Initializing Camera...</div>
+
+    <div id="diagnostics-panel" class="diagnostics" style="display: none"></div>
+
+    <div class="controls">
+      <button id="switch-camera-btn" class="btn" style="display: none">
+        Switch Camera
+      </button>
+      <button id="flash-btn" class="btn" style="display: none">
+        Turn On Flash
+      </button>
+      <button id="light-mode-btn" class="btn" style="display: none">
+        Turn On Screen Light
+      </button>
+      <button id="toggle-zoom-btn" class="btn" style="display: none">
+        Switch to Auto Zoom
+      </button>
+      <button id="rotate-btn" class="btn">Rotate Stream</button>
+      <button id="mirror-btn" class="btn">Mirror Send</button>
+    </div>
+
+    <div id="zoom-control" class="slider-control">
+      <label for="zoom-slider">Manual Zoom:</label>
+      <input type="range" id="zoom-slider" />
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script>
+      const video = document.getElementById("video");
+      const displayCanvas = document.getElementById("display-canvas");
+      const displayCtx = displayCanvas.getContext("2d");
+      const streamingCanvas = document.getElementById("streaming-canvas");
+      const streamingCtx = streamingCanvas.getContext("2d");
+      const statusDiv = document.getElementById("status");
+      const diagnosticsPanel = document.getElementById("diagnostics-panel");
+      const zoomControlDiv = document.getElementById("zoom-control");
+      const zoomSlider = document.getElementById("zoom-slider");
+      const switchBtn = document.getElementById("switch-camera-btn");
+      const flashBtn = document.getElementById("flash-btn");
+      const lightModeBtn = document.getElementById("light-mode-btn");
+      const toggleZoomBtn = document.getElementById("toggle-zoom-btn");
+      const rotateBtn = document.getElementById("rotate-btn");
+      const mirrorBtn = document.getElementById("mirror-btn");
+      const socket = io();
+
+      let peerConnection, currentStream, faceDetector;
+      let videoDevices = [],
+        currentDeviceIndex = 0;
+      let isFlashOn = false,
+        isLightModeOn = false,
+        frameCount = 0;
+      let isAutoZoomEnabled = false;
+      let rotationAngle = 0;
+      let isFrontCamera = false;
+      let isStreamMirrored = false;
+      let animationFrameId = null;
+
+      const config = {
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      };
+
+      video.addEventListener("play", () => {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+        processVideo();
+      });
+
+      async function startStream(isSwitching = false) {
+        if (currentStream) {
+          currentStream.getTracks().forEach((track) => track.stop());
+        }
+        const constraints = {
+          video: {
+            deviceId: videoDevices[currentDeviceIndex]
+              ? { exact: videoDevices[currentDeviceIndex].deviceId }
+              : undefined,
+          },
+          audio: false,
+        };
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          currentStream = stream;
+          video.srcObject = stream;
+          statusDiv.textContent = "Waiting for teacher to connect...";
+          if (isSwitching && peerConnection) {
+            const videoTrack = stream.getVideoTracks()[0];
+            const sender = peerConnection
+              .getSenders()
+              .find((s) => s.track.kind === "video");
+            if (sender) await sender.replaceTrack(videoTrack);
+          }
+          await video.play();
+
+          if ("FaceDetector" in window && !faceDetector) {
+            try {
+              faceDetector = new FaceDetector({ fastMode: true });
+            } catch (e) {}
+          }
+          await setupAdvancedControls();
+
+          if (!isSwitching) {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            videoDevices = devices.filter((d) => d.kind === "videoinput");
+            if (videoDevices.length > 1) switchBtn.style.display = "block";
+          }
+        } catch (error) {
+          console.error("Error accessing camera:", error);
+          statusDiv.textContent = "Error: Could not access camera.";
+        }
+      }
+
+      async function processVideo() {
+        if (video.paused || video.ended) {
+          return;
+        }
+
+        // 1. Prepare stream for teacher
+        const isStreamSideways = rotationAngle === 90 || rotationAngle === 270;
+        streamingCanvas.width = isStreamSideways
+          ? video.videoHeight
+          : video.videoWidth;
+        streamingCanvas.height = isStreamSideways
+          ? video.videoWidth
+          : video.videoHeight;
+
+        streamingCtx.save();
+        streamingCtx.translate(
+          streamingCanvas.width / 2,
+          streamingCanvas.height / 2
+        );
+        streamingCtx.rotate((rotationAngle * Math.PI) / 180);
+
+        if (isStreamMirrored) {
+          streamingCtx.scale(-1, 1);
+        }
+
+        streamingCtx.drawImage(
+          video,
+          -video.videoWidth / 2,
+          -video.videoHeight / 2,
+          video.videoWidth,
+          video.videoHeight
+        );
+        streamingCtx.restore();
+
+        // 2. Prepare local display
+        displayCanvas.width = video.videoWidth;
+        displayCanvas.height = video.videoHeight;
+        displayCtx.save();
+        if (isFrontCamera) {
+          displayCtx.translate(displayCanvas.width, 0);
+          displayCtx.scale(-1, 1);
+        }
+        displayCtx.drawImage(
+          video,
+          0,
+          0,
+          displayCanvas.width,
+          displayCanvas.height
+        );
+        displayCtx.restore();
+
+        // 3. Draw a simple "UP" orientation indicator for the operator
+        displayCtx.save();
+        displayCtx.font = "bold 20px Poppins";
+        displayCtx.fillStyle = "rgba(255, 255, 255, 0.8)";
+        displayCtx.textAlign = "center";
+        displayCtx.textBaseline = "middle";
+
+        let effectiveAngle = rotationAngle;
+        if (
+          isStreamMirrored &&
+          (rotationAngle === 90 || rotationAngle === 270)
+        ) {
+          effectiveAngle = (rotationAngle + 180) % 360;
+        }
+
+        const fullText = `UP (${rotationAngle}°)`;
+        const padding = 30;
+        let x, y, textAngle;
+
+        switch (effectiveAngle) {
+          case 90:
+            x = displayCanvas.width - padding;
+            y = displayCanvas.height / 2;
+            textAngle = 90;
+            break;
+          case 180:
+            x = displayCanvas.width / 2;
+            y = displayCanvas.height - padding;
+            textAngle = 180;
+            break;
+          case 270:
+            x = padding;
+            y = displayCanvas.height / 2;
+            textAngle = -90;
+            break;
+          default: // 0 degrees
+            x = displayCanvas.width / 2;
+            y = padding;
+            textAngle = 0;
+            break;
+        }
+
+        displayCtx.translate(x, y);
+        displayCtx.rotate((textAngle * Math.PI) / 180);
+        displayCtx.fillText(fullText, 0, 0);
+        displayCtx.restore();
+
+        // 4. Handle auto-zoom
+        if (isAutoZoomEnabled && faceDetector && frameCount % 15 === 0) {
+          try {
+            const faces = await faceDetector.detect(displayCanvas);
+            const [track] = currentStream.getVideoTracks();
+            const capabilities = track.getCapabilities();
+
+            if (faces.length > 0) {
+              let minX = displayCanvas.width,
+                minY = displayCanvas.height,
+                maxX = 0,
+                maxY = 0;
+              faces.forEach((face) => {
+                minX = Math.min(minX, face.boundingBox.x);
+                minY = Math.min(minY, face.boundingBox.y);
+                maxX = Math.max(
+                  maxX,
+                  face.boundingBox.x + face.boundingBox.width
+                );
+                maxY = Math.max(
+                  maxY,
+                  face.boundingBox.y + face.boundingBox.height
+                );
+              });
+              const groupWidth = maxX - minX;
+              const groupHeight = maxY - minY;
+
+              displayCtx.strokeStyle = "rgba(52, 152, 219, 0.8)";
+              displayCtx.lineWidth = 4;
+              displayCtx.strokeRect(minX, minY, groupWidth, groupHeight);
+
+              if (
+                capabilities.zoom &&
+                capabilities.zoom.max > capabilities.zoom.min
+              ) {
+                const margin = 0.3;
+                const zoomRatioX =
+                  displayCanvas.width / (groupWidth * (1 + margin));
+                const zoomRatioY =
+                  displayCanvas.height / (groupHeight * (1 + margin));
+                let targetZoom = Math.min(zoomRatioX, zoomRatioY);
+                const currentZoom = track.getSettings().zoom || 1;
+                targetZoom = Math.max(
+                  capabilities.zoom.min,
+                  Math.min(capabilities.zoom.max, targetZoom)
+                );
+                const newZoom = currentZoom + (targetZoom - currentZoom) * 0.1;
+                track
+                  .applyConstraints({ advanced: [{ zoom: newZoom }] })
+                  .catch((e) => {});
+              }
+            } else {
+              if (
+                capabilities.zoom &&
+                capabilities.zoom.max > capabilities.zoom.min
+              ) {
+                const currentZoom =
+                  track.getSettings().zoom || capabilities.zoom.min;
+                const targetZoom = capabilities.zoom.min;
+                if (Math.abs(currentZoom - targetZoom) > 0.1) {
+                  const newZoom =
+                    currentZoom + (targetZoom - currentZoom) * 0.1;
+                  track
+                    .applyConstraints({ advanced: [{ zoom: newZoom }] })
+                    .catch((e) => {});
+                }
+              }
+            }
+          } catch (e) {
+            faceDetector = null;
+          }
+        }
+        frameCount++;
+
+        animationFrameId = requestAnimationFrame(processVideo);
+      }
+
+      async function setupAdvancedControls() {
+        const [track] = currentStream.getVideoTracks();
+        if (!track) return;
+
+        const capabilities = await track.getCapabilities();
+        const settings = await track.getSettings();
+        const hasZoomRange =
+          capabilities.zoom && capabilities.zoom.max > capabilities.zoom.min;
+
+        isFrontCamera = settings.facingMode === "user";
+
+        diagnosticsPanel.style.display = "block";
+        diagnosticsPanel.innerHTML = `
+            <p><strong>Face Detector:</strong> <span class="${
+              faceDetector ? "supported" : "unsupported"
+            }">${faceDetector ? "Supported" : "Not Supported"}</span></p>
+            <p><strong>Camera Zoom:</strong> <span class="${
+              hasZoomRange ? "supported" : "unsupported"
+            }">${hasZoomRange ? "Yes" : "No"}</span></p>
+          `;
+
+        if (hasZoomRange) {
+          zoomControlDiv.style.display = "block";
+          zoomSlider.min = capabilities.zoom.min;
+          zoomSlider.max = capabilities.zoom.max;
+          zoomSlider.step = capabilities.zoom.step;
+          zoomSlider.value = settings.zoom || capabilities.zoom.min;
+
+          zoomSlider.oninput = (event) => {
+            track
+              .applyConstraints({
+                advanced: [{ zoom: parseFloat(event.target.value) }],
+              })
+              .catch((e) => console.error("Error applying manual zoom:", e));
+          };
+
+          if (faceDetector) {
+            isAutoZoomEnabled = false;
+            toggleZoomBtn.style.display = "block";
+            toggleZoomBtn.textContent = "Switch to Auto Zoom";
+          } else {
+            toggleZoomBtn.style.display = "none";
+          }
+        } else {
+          isAutoZoomEnabled = false;
+          toggleZoomBtn.style.display = "none";
+          zoomControlDiv.style.display = "none";
+        }
+
+        if (capabilities.torch) flashBtn.style.display = "block";
+        else flashBtn.style.display = "none";
+
+        if (settings.facingMode !== "environment")
+          lightModeBtn.style.display = "block";
+        else lightModeBtn.style.display = "none";
+      }
+
+      toggleZoomBtn.addEventListener("click", () => {
+        isAutoZoomEnabled = !isAutoZoomEnabled;
+        zoomControlDiv.style.display = isAutoZoomEnabled ? "none" : "block";
+        toggleZoomBtn.textContent = isAutoZoomEnabled
+          ? "Switch to Manual Zoom"
+          : "Switch to Auto Zoom";
+      });
+
+      switchBtn.addEventListener("click", () => {
+        currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+        startStream(true);
+      });
+
+      flashBtn.addEventListener("click", () => {
+        if (currentStream) {
+          const [track] = currentStream.getVideoTracks();
+          isFlashOn = !isFlashOn;
+          track
+            .applyConstraints({ advanced: [{ torch: isFlashOn }] })
+            .catch((e) => console.error("Error applying flash:", e));
+          flashBtn.textContent = isFlashOn ? "Turn Off Flash" : "Turn On Flash";
+        }
+      });
+
+      rotateBtn.addEventListener("click", () => {
+        // Always rotate clockwise for both cameras
+        if (isFrontCamera) {
+          rotationAngle = (rotationAngle + 90) % 360;
+        }
+        if (!isFrontCamera) {
+          rotationAngle = (rotationAngle - 90) % 360;
+        }
+      });
+
+      lightModeBtn.addEventListener("click", () => {
+        isLightModeOn = !isLightModeOn;
+        document.body.classList.toggle("light-mode-on", isLightModeOn);
+        displayCanvas.classList.toggle("shrunk", isLightModeOn);
+        lightModeBtn.textContent = isLightModeOn
+          ? "Turn Off Screen Light"
+          : "Turn On Screen Light";
+      });
+
+      mirrorBtn.addEventListener("click", () => {
+        isStreamMirrored = !isStreamMirrored;
+        mirrorBtn.textContent = isStreamMirrored
+          ? "Un-mirror Send"
+          : "Mirror Send";
+      });
+
+      socket.on("teacher-connect", () => {
+        statusDiv.textContent = "Teacher connected. Creating offer...";
+        peerConnection = new RTCPeerConnection(config);
+        const canvasStream = streamingCanvas.captureStream(30);
+        canvasStream.getTracks().forEach((track) => {
+          peerConnection.addTrack(track, canvasStream);
+        });
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.emit("candidate-from-camera", event.candidate);
+          }
+        };
+        peerConnection
+          .createOffer()
+          .then((offer) => peerConnection.setLocalDescription(offer))
+          .then(() => {
+            socket.emit("offer-from-camera", peerConnection.localDescription);
+          });
+      });
+      socket.on("answer-from-teacher", (answer) => {
+        peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        statusDiv.textContent = "Streaming to teacher's dashboard.";
+      });
+      socket.on("candidate-from-teacher", (candidate) => {
+        if (peerConnection) {
+          peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+      });
+
+      startStream();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>{{ 'Update' if user else 'Add' }} User</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f7f8;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #0056b3;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        .btn {
+            flex-grow: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary { background: linear-gradient(135deg, #007bff, #0056b3); }
+        .btn-secondary { background: linear-gradient(135deg, #6c757d, #5a6268); }
+        .flash-messages { list-style: none; padding: 0; margin-bottom: 20px; }
+        .flash-danger { padding: 15px; border-radius: 8px; background-color: #f8d7da; color: #721c24; text-align: center; }
+        small { color: #888; font-size: 0.8rem; }
+        .self-edit-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form method="POST" action="{{ url_for(request.endpoint, user_id=user.id) if user else url_for(request.endpoint) }}">
+            <h2>{{ 'Update' if user else 'Add' }} User</h2>
+
+            {% if user and user.id == session.get('user_id') %}
+            <div class="self-edit-warning">
+                <strong>Warning:</strong> You are editing your own account. For security, some fields are disabled.
+            </div>
+            {% endif %}
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flash-messages">
+                    {% for category, message in messages %}
+                        <li class="flash-{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" value="{{ user.username or '' }}" required {% if user and user.id == session.get('user_id') %}disabled{% endif %}/>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="{{ user.email or '' }}" required {% if user and user.id == session.get('user_id') %}disabled{% endif %}/>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" />
+                {% if user %}
+                <small>Leave blank to keep the current password.</small>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role" required onchange="toggleFields()" {% if user and user.id == session.get('user_id') %}disabled{% endif %}>
+                    <option value="student" {% if user and user.role == 'student' %}selected{% endif %}>Student</option>
+                    <option value="teacher" {% if user and user.role == 'teacher' %}selected{% endif %}>Teacher</option>
+                    <option value="admin" {% if user and user.role == 'admin' %}selected{% endif %}>Admin</option>
+                </select>
+            </div>
+            
+            <div id="student-specific-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="enrollment_number">Enrollment Number</label>
+                    <input type="text" id="enrollment_number" name="enrollment_number" value="{{ user.enrollment_number or '' }}" {% if user and user.id == session.get('user_id') %}disabled{% endif %}>
+                </div>
+            </div>
+
+            <div class="form-group" id="class-field" style="display: none;">
+                <label for="class_name">Class Name(s)</label>
+                <input type="text" id="class_name" name="class_name" 
+                       value="{{ user.class_ref.name if user and user.role == 'student' and user.class_ref else 
+                                 (user.class_assignments | map(attribute='class_ref.name') | join(', ')) if user and user.role == 'teacher' else '' }}" 
+                       placeholder="For Teachers: '10A, 11B, 12C'" {% if user and user.id == session.get('user_id') %}disabled{% endif %}>
+                <small>For students, one class. For teachers, comma-separated.</small>
+            </div>
+             <div class="form-group" id="subject-field" style="display: none;">
+                <label for="subject">Subject</label>
+                <input type="text" id="subject" name="subject" 
+                       value="{{ user.class_assignments[0].subject.name if user and user.role == 'teacher' and user.class_assignments else '' }}"
+                       placeholder="For Teachers only (e.g., Mathematics)" {% if user and user.id == session.get('user_id') %}disabled{% endif %}>
+            </div>
+
+            <div class="btn-group">
+                {% if not user or user.id != session.get('user_id') %}
+                <button type="submit" class="btn btn-primary">{{ 'Update User' if user else 'Add User' }}</button>
+                {% endif %}
+                <a href="{{ url_for('admin_manage_users') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function toggleFields() {
+            const role = document.getElementById('role').value;
+            const studentSpecificFields = document.getElementById('student-specific-fields');
+            const classField = document.getElementById('class-field');
+            const subjectField = document.getElementById('subject-field');
+
+            studentSpecificFields.style.display = 'none';
+            classField.style.display = 'none';
+            subjectField.style.display = 'none';
+
+            if (role === 'student') {
+                studentSpecificFields.style.display = 'block';
+                classField.style.display = 'block';
+            } else if (role === 'teacher') {
+                classField.style.display = 'block';
+                subjectField.style.display = 'block';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', toggleFields);
+    </script>
+</body>
+</html>
+

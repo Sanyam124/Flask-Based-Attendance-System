@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Teacher Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --background-color: #f4f7f8;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        background-color: var(--background-color);
+        color: var(--text-color);
+      }
+      .container {
+        /* UPDATED: Increased max-width for a more spacious layout */
+        max-width: 1100px;
+        margin: 30px auto;
+        padding: 20px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        background: var(--card-bg-color);
+        padding: 20px 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      }
+      .welcome-text h2 {
+        margin: 0;
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 2rem;
+      }
+      .welcome-text p {
+        margin: 5px 0 0;
+        color: var(--secondary-color);
+      }
+      .header-actions {
+        position: relative;
+      }
+      .profile-pic {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2rem;
+        font-weight: bold;
+        cursor: pointer;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .profile-dropdown {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 75px;
+        background-color: white;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .profile-dropdown a {
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+      }
+      .profile-dropdown a:hover {
+        background-color: #f1f1f1;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        /* UPDATED: Adjusted grid for a better look on wider screens */
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 25px;
+      }
+      .card {
+        background: var(--card-bg-color);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s, box-shadow 0.3s;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+      }
+      .card h3 {
+        margin: 0 0 10px;
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 1.5rem;
+      }
+      .card p {
+        margin-bottom: 25px;
+        font-size: 1rem;
+        color: var(--subtle-text-color);
+        line-height: 1.6;
+      }
+      .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .button {
+        display: block;
+        padding: 14px 20px;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        text-align: center;
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+      .button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      }
+      .button.primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+      }
+      .button.secondary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+      }
+      .button.tertiary {
+        background: linear-gradient(135deg, #28a745, #218838);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="welcome-text">
+          <h2>Teacher Dashboard</h2>
+          <p>Welcome, {{ teacher.username }}!</p>
+        </div>
+        <div class="header-actions">
+          <div class="profile-pic" id="profile-pic-btn">
+            <span>{{ teacher.username[0]|upper }}</span>
+          </div>
+          <div id="profile-dropdown" class="profile-dropdown">
+            <a href="{{ url_for('view_profile', user_id=teacher.id) }}"
+              >View Profile</a
+            >
+            <a href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-grid">
+        <div class="card">
+          <h3>Attendance Tools</h3>
+          <p>
+            Mark attendance manually, update past records, or view detailed
+            reports for your classes.
+          </p>
+          <div class="button-group">
+            <a
+              href="{{ url_for('manual_attendance') }}"
+              class="button secondary"
+              >Manual Attendance</a
+            >
+            <a href="{{ url_for('update_attendance') }}" class="button tertiary"
+              >Update Records</a
+            >
+            <a
+              href="{{ url_for('teacher_attendance_reports') }}"
+              class="button secondary"
+              >View Reports</a
+            >
+          </div>
+        </div>
+        <div class="card">
+          <h3>Smart Attendance</h3>
+          <p>
+            Use facial recognition to take attendance automatically for a new
+            session.
+          </p>
+          <div class="button-group">
+            {% for class_assoc in classes_taught %}
+            <a
+              href="{{ url_for('teacher_attendance', class_teacher_id=class_assoc.id) }}"
+              class="button primary"
+            >
+              Start for {{ class_assoc.class_ref.name }} ({{
+              class_assoc.subject.name }})
+            </a>
+            {% else %}
+            <p>You are not assigned to any classes yet.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const profilePicBtn = document.getElementById("profile-pic-btn");
+      const dropdown = document.getElementById("profile-dropdown");
+
+      profilePicBtn.addEventListener("click", function () {
+        dropdown.style.display =
+          dropdown.style.display === "block" ? "none" : "block";
+      });
+
+      // Close dropdown if clicked outside
+      window.addEventListener("click", function (event) {
+        if (
+          !profilePicBtn.contains(event.target) &&
+          !dropdown.contains(event.target)
+        ) {
+          dropdown.style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ user.username }}'s Profile</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        background-color: #f4f7f8;
+        color: #333;
+      }
+      .container {
+        max-width: 800px;
+        margin: 30px auto;
+        padding: 30px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+      .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 25px;
+        padding-bottom: 25px;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #e9ecef;
+      }
+      .profile-pic {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: #007bff;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 3rem;
+        font-weight: bold;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .profile-pic img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .profile-info h2 {
+        margin: 0;
+        color: #0056b3;
+      }
+      .profile-info p {
+        margin: 5px 0 0;
+        color: #6c757d;
+        font-size: 1.1rem;
+      }
+      .profile-details {
+        line-height: 2;
+      }
+      .profile-item {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        margin-bottom: 10px;
+      }
+      .profile-item .label {
+        font-weight: bold;
+        color: #555;
+      }
+      .profile-item .value {
+        color: #333;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .value li {
+        background: #f8f9fa;
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-bottom: 5px;
+      }
+      .back-link {
+        display: inline-block;
+        margin-top: 30px;
+        padding: 10px 20px;
+        background: #6c757d;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: 0.3s;
+      }
+      .back-link:hover {
+        background: #5a6268;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="profile-header">
+        <div class="profile-pic">
+          {% if profile_image_url %}
+          <img
+            src="{{ url_for('static', filename=profile_image_url) }}"
+            alt="Profile Picture"
+          />
+          {% else %}
+          <span>{{ user.username[0]|upper }}</span>
+          {% endif %}
+        </div>
+        <div class="profile-info">
+          <h2>{{ user.username }}</h2>
+          <p>{{ user.role.title() }}</p>
+        </div>
+      </div>
+
+      <h3>User Details</h3>
+      <div class="profile-details">
+        <div class="profile-item">
+          <span class="label">User ID</span>
+          <span class="value">{{ user.id }}</span>
+        </div>
+        <div class="profile-item">
+          <span class="label">Email</span>
+          <span class="value">{{ user.email }}</span>
+        </div>
+
+        <!-- Display Enrollment Number for Students -->
+        {% if user.role == 'student' %}
+        <div class="profile-item">
+          <span class="label">Enrollment Number</span>
+          <span class="value">{{ user.enrollment_number or 'Not set' }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Display Class for Students -->
+        {% if user.role == 'student' and user.class_ref %}
+        <div class="profile-item">
+          <span class="label">Class</span>
+          <span class="value">{{ user.class_ref.name }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Display Classes for Teachers -->
+        {% if user.role == 'teacher' and user.class_assignments %}
+        <div class="profile-item">
+          <span class="label">Assigned Classes</span>
+          <div class="value">
+            <ul>
+              {% for assoc in user.class_assignments %}
+              <li>{{ assoc.class_ref.name }} ({{ assoc.subject.name }})</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <a href="{{ url_for(user.role + '_dashboard') }}" class="back-link"
+        >Back to Dashboard</a
+      >
+    </div>
+  </body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Students in {{ target_class.name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --background-color: #f4f7f8;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+        --header-text-color: #ffffff;
+        --border-color: #dee2e6;
+      }
+      body {
+        font-family: "Poppins", sans-serif;
+        background: var(--background-color);
+        margin: 0;
+        color: var(--text-color);
+      }
+      .container {
+        max-width: 1100px;
+        margin: 30px auto;
+        padding: 20px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+      }
+      h2 {
+        margin: 0;
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 2rem;
+      }
+      h2 strong {
+        color: #333;
+      }
+      .btn {
+        padding: 12px 22px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+      }
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+      }
+      .table-container {
+        background: var(--card-bg-color);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        color: #555;
+      }
+      th {
+        background-color: var(--primary-color);
+        color: var(--header-text-color);
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1px;
+        font-weight: 600;
+      }
+      tbody tr:hover {
+        background-color: #f1f5ff;
+      }
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+      td strong {
+        color: var(--text-color);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h2>Students in Class: <strong>{{ target_class.name }}</strong></h2>
+        <a
+          href="{{ url_for('admin_manage_classes') }}"
+          class="btn btn-secondary"
+          >Back to Classes List</a
+        >
+      </header>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: center">Sr. No.</th>
+              <th>Enrollment No.</th>
+              <th>Student Name</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in students %}
+            <tr>
+              <td style="text-align: center">{{ loop.index }}</td>
+              <td><strong>{{ student.enrollment_number }}</strong></td>
+              <td>{{ student.username }}</td>
+              <td>{{ student.email }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td
+                colspan="4"
+                style="text-align: center; padding: 40px; color: #888"
+              >
+                There are no active students assigned to this class.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

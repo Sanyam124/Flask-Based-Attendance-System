@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Attendance System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #6a82fb;
+        --secondary-color: #fc5c7d;
+        --background-color: #f4f7f8;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+        --subtle-text-color: #6c757d;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+      }
+
+      .container {
+        background: var(--card-bg-color);
+        padding: 40px 50px;
+        border-radius: 20px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        max-width: 500px;
+        width: 100%;
+        opacity: 0;
+        transform: translateY(-20px);
+        animation: fadeIn 1s ease-in-out forwards;
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        margin-bottom: 30px;
+      }
+
+      .header svg {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 15px;
+        color: var(--primary-color);
+      }
+
+      .header h1 {
+        color: var(--text-color);
+        margin: 0 0 10px;
+        font-weight: 700;
+        font-size: 2rem;
+      }
+
+      .header p {
+        color: var(--subtle-text-color);
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .actions-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .btn {
+        display: block;
+        padding: 15px 20px;
+        font-size: 1rem;
+        color: #fff;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        border: none;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(106, 130, 251, 0.4);
+        background: linear-gradient(135deg, #7b91ff, #fd718f);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M17 11h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2a2 2 0 012-2zm-2-4a4 4 0 100 8 4 4 0 000-8zm-4 4a2 2 0 11-4 0 2 2 0 014 0zm2-4a4 4 0 100 8 4 4 0 000-8zM5 11h2a2 2 0 012 2v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2 2 0 012-2z"
+          />
+        </svg>
+        <h1>Smart Attendance System</h1>
+        <p>Your seamless solution for tracking attendance.</p>
+      </div>
+
+      <div class="actions-container">
+        <a href="{{ url_for('login') }}" class="btn">Login to Your Account</a>
+        <a href="{{ url_for('register') }}" class="btn"
+          >Register a New Account</a
+        >
+      </div>
+    </div>
+  </body>
+</html>

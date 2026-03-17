@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Capture Face Samples</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f4f7fb;
+        color: #333;
+        text-align: center;
+      }
+
+      header {
+        background: #4a90e2;
+        color: #fff;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      header h2 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: bold;
+      }
+
+      main {
+        margin: 30px auto;
+        padding: 20px;
+        max-width: 800px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      img {
+        margin: 20px 0;
+        border-radius: 10px;
+        border: 3px solid #4a90e2;
+        max-width: 100%;
+        height: auto;
+      }
+
+      p {
+        font-size: 16px;
+        color: #555;
+      }
+
+      .loader {
+        margin: 20px auto;
+        border: 6px solid #f3f3f3;
+        border-top: 6px solid #4a90e2;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+
+    <script>
+      function checkStatus(username) {
+        fetch(`/student/check_capture_status/${username}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.completed) {
+              alert("✅ Face samples captured successfully!");
+              window.location.href = "/student/dashboard";
+            } else {
+              setTimeout(() => checkStatus(username), 2000);
+            }
+          });
+      }
+
+      window.onload = function () {
+        const username = "{{ username }}";
+        checkStatus(username);
+      };
+    </script>
+  </head>
+  <body>
+    <header>
+      <h2>Capturing Face Samples</h2>
+    </header>
+
+    <main>
+      <h3>Student: {{ username }}</h3>
+      <img src="{{ url_for('student_video_feed') }}" alt="Live Video Feed" />
+
+      <div class="loader"></div>
+
+      <p>
+        Please wait while we capture your face samples. The page will redirect
+        automatically once done.
+      </p>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Manage Classes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --background-color: #f4f7f8;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+        --header-text-color: #ffffff;
+        --border-color: #dee2e6;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background: var(--background-color);
+        margin: 0;
+        color: var(--text-color);
+      }
+      .container {
+        max-width: 1100px;
+        margin: 30px auto;
+        padding: 20px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+      }
+      h2 {
+        margin: 0;
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 2rem;
+      }
+      .btn {
+        padding: 12px 22px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+      }
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+      }
+      .btn-danger {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+      }
+      .btn-warning {
+        background: linear-gradient(135deg, #ffc107, #e0a800);
+        color: #212529;
+      }
+      .btn-success {
+        background: linear-gradient(135deg, #28a745, #218838);
+      }
+
+      .table-container {
+        background: var(--card-bg-color);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        color: #555;
+      }
+      th {
+        background-color: var(--primary-color);
+        color: var(--header-text-color);
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1px;
+        font-weight: 600;
+      }
+      tbody tr {
+        transition: background-color 0.25s ease;
+      }
+      tbody tr.inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      tbody tr:not(.inactive):hover {
+        background-color: #f1f5ff;
+      }
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+      ul {
+        padding-left: 0;
+        margin: 0;
+        list-style-type: none;
+      }
+      li {
+        margin-bottom: 8px;
+        padding-left: 10px;
+        border-left: 3px solid var(--primary-color);
+      }
+      li:last-child {
+        margin-bottom: 0;
+      }
+      td strong {
+        color: var(--text-color);
+        font-weight: 600;
+      }
+      .actions .action-buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .actions .action-buttons form {
+        margin: 0;
+      }
+      .status-badge {
+        font-size: 0.8em;
+        padding: 4px 10px;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+      }
+      .status-active {
+        background-color: #28a745;
+      }
+      .status-inactive {
+        background-color: #dc3545;
+      }
+      .flash-messages {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 20px;
+      }
+      .flash-messages li {
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .flash-success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+
+      @media (max-width: 992px) {
+        .actions .action-buttons {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .actions .action-buttons .btn {
+          width: 100%;
+          box-sizing: border-box;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h2>Manage Classes</h2>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary"
+          >Back to Dashboard</a
+        >
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <ul class="flash-messages">
+        {% for category, message in messages %}
+        <li class="flash-{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %} {% endwith %}
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 25%">Class Name</th>
+              <th>Assigned Teachers & Subjects</th>
+              <th style="width: 12%">Status</th>
+              <th style="text-align: center; width: 35%">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cls in classes %}
+            <tr class="{{ 'inactive' if not cls.is_active }}">
+              <td><strong>{{ cls.name }}</strong></td>
+              <td>
+                {% if cls.class_teachers %}
+                <ul>
+                  {% for assoc in cls.class_teachers %}
+                  <li>
+                    <strong>{{ assoc.teacher.username }}</strong> - {{
+                    assoc.subject.name }}
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% else %}
+                <span style="color: #888">No teachers assigned</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if cls.is_active %}
+                <span class="status-badge status-active">Active</span>
+                {% else %}
+                <span class="status-badge status-inactive">Inactive</span>
+                {% endif %}
+              </td>
+              <td class="actions" style="text-align: center">
+                <div class="action-buttons">
+                  <a
+                    href="{{ url_for('admin_view_class_students', class_id=cls.id) }}"
+                    class="btn btn-primary"
+                    >View Students</a
+                  >
+
+                  {% if cls.is_active %}
+                  <form
+                    action="{{ url_for('admin_deactivate_class', class_id=cls.id) }}"
+                    method="POST"
+                    onsubmit="return confirm('Deactivating this class will prevent new attendance from being taken. Are you sure?');"
+                  >
+                    <button type="submit" class="btn btn-warning">
+                      Deactivate
+                    </button>
+                  </form>
+                  {% else %}
+                  <form
+                    action="{{ url_for('admin_reactivate_class', class_id=cls.id) }}"
+                    method="POST"
+                  >
+                    <button type="submit" class="btn btn-success">
+                      Reactivate
+                    </button>
+                  </form>
+                  {% endif %}
+
+                  <form
+                    action="{{ url_for('admin_delete_class', class_id=cls.id) }}"
+                    method="POST"
+                    onsubmit="return confirm('WARNING: This will permanently delete the class, its assignments, and all its students. This cannot be undone. Are you sure?');"
+                  >
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td
+                colspan="4"
+                style="text-align: center; padding: 40px; color: #888"
+              >
+                No classes have been created yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

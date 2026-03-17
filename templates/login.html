@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Smart Attendance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #6a82fb;
+        --secondary-color: #fc5c7d;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+        --subtle-text-color: #6c757d;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+      }
+
+      .container {
+        background: var(--card-bg-color);
+        padding: 40px 50px;
+        border-radius: 20px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        max-width: 450px;
+        width: 100%;
+        opacity: 0;
+        transform: translateY(-20px);
+        animation: fadeIn 1s 0.1s ease-in-out forwards;
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        margin-bottom: 25px;
+      }
+
+      .header svg {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 10px;
+        color: var(--primary-color);
+      }
+
+      .header h2 {
+        color: var(--text-color);
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.8rem;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: var(--subtle-text-color);
+        font-size: 0.9rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(106, 130, 251, 0.2);
+      }
+
+      .btn {
+        display: block;
+        width: 100%;
+        padding: 15px;
+        font-size: 1rem;
+        color: #fff;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        border: none;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-top: 10px;
+      }
+
+      .btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(106, 130, 251, 0.4);
+      }
+
+      .flash-messages {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 20px 0;
+      }
+
+      .flash-messages li {
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+      }
+
+      .flash-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .flash-success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .flash-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+
+      .footer-link {
+        margin-top: 25px;
+        font-size: 0.9rem;
+        color: var(--subtle-text-color);
+      }
+
+      .footer-link a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M12 2a5 5 0 100 10 5 5 0 000-10zm0 12c-3.866 0-7 1.79-7 4v2h14v-2c0-2.21-3.134-4-7-4z"
+          />
+        </svg>
+        <h2>Welcome Back!</h2>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <ul class="flash-messages">
+        {% for category, message in messages %}
+        <li class="flash-{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %} {% endwith %}
+
+      <form method="POST" action="{{ url_for('login') }}">
+        <div class="form-group">
+          <label for="login_identifier">Email or Enrollment Number</label>
+          <input
+            type="text"
+            id="login_identifier"
+            name="login_identifier"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required />
+        </div>
+        <button type="submit" class="btn">Login</button>
+      </form>
+
+      <p class="footer-link">
+        Don't have an account?
+        <a href="{{ url_for('register') }}">Register here</a>
+      </p>
+    </div>
+  </body>
+</html>

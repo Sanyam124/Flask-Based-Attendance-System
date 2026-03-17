@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - Smart Attendance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #6a82fb;
+        --secondary-color: #fc5c7d;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+        --subtle-text-color: #6c757d;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+      }
+
+      .container {
+        background: var(--card-bg-color);
+        padding: 40px 50px;
+        border-radius: 20px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        max-width: 480px;
+        width: 100%;
+        opacity: 0;
+        transform: translateY(-20px);
+        animation: fadeIn 1s 0.1s ease-in-out forwards;
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 25px;
+      }
+
+      .header svg {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 10px;
+        color: var(--primary-color);
+      }
+
+      .header h2 {
+        color: var(--text-color);
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.8rem;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: var(--subtle-text-color);
+        font-size: 0.9rem;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      input:focus,
+      select:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(106, 130, 251, 0.2);
+      }
+
+      .btn {
+        display: block;
+        width: 100%;
+        padding: 15px;
+        font-size: 1rem;
+        color: #fff;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        border: none;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-top: 10px;
+      }
+
+      .btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(106, 130, 251, 0.4);
+      }
+
+      .alert {
+        padding: 1rem;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 0.9rem;
+      }
+      .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+
+      .footer-link {
+        text-align: center;
+        margin-top: 25px;
+        font-size: 0.9rem;
+        color: var(--subtle-text-color);
+      }
+
+      .footer-link a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M16 13a4 4 0 11-8 0 4 4 0 018 0zm-2 0a2 2 0 10-4 0 2 2 0 004 0zm-2-7a4 4 0 11-8 0 4 4 0 018 0zm-2 0a2 2 0 10-4 0 2 2 0 004 0zm2 7a4 4 0 118 0 4 4 0 01-8 0zm2 0a2 2 0 104 0 2 2 0 00-4 0z"
+          />
+        </svg>
+        <h2>Create an Account</h2>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %} {% endif %} {% endwith %}
+
+      <form method="POST" action="{{ url_for('register') }}">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required />
+        </div>
+        <div class="form-group">
+          <label for="email">College Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="user@paruluniversity.ac.in"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required />
+        </div>
+        <div class="form-group">
+          <label for="role">Role</label>
+          <select id="role" name="role" required onchange="toggleFields()">
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
+        <!-- Conditional fields -->
+        <div id="student-fields">
+          <div class="form-group">
+            <label for="enrollment_number">Enrollment Number</label>
+            <input
+              type="text"
+              id="enrollment_number"
+              placeholder="Enter unique enrollment number"
+            />
+          </div>
+          <div class="form-group">
+            <label for="student_class_name">Class</label>
+            <input
+              type="text"
+              id="student_class_name"
+              placeholder="Enter class name"
+            />
+          </div>
+        </div>
+        <div id="teacher-fields" style="display: none">
+          <div class="form-group">
+            <label for="teacher_class_name">Assign to Class(es)</label>
+            <input
+              type="text"
+              id="teacher_class_name"
+              placeholder="e.g., 10A, 11B, 12C"
+            />
+          </div>
+          <div class="form-group">
+            <label for="subject">Subject</label>
+            <input type="text" id="subject" placeholder="e.g., Mathematics" />
+          </div>
+        </div>
+        <!-- End conditional fields -->
+
+        <button type="submit" class="btn">Register</button>
+      </form>
+
+      <p class="footer-link">
+        Already have an account?
+        <a href="{{ url_for('login') }}">Login here</a>
+      </p>
+    </div>
+    <script>
+      function toggleFields() {
+        const role = document.getElementById("role").value;
+        const studentFields = document.getElementById("student-fields");
+        const teacherFields = document.getElementById("teacher-fields");
+
+        const enrollmentInput = document.getElementById("enrollment_number");
+        const studentClassNameInput =
+          document.getElementById("student_class_name");
+        const teacherClassNameInput =
+          document.getElementById("teacher_class_name");
+        const subjectInput = document.getElementById("subject");
+
+        studentFields.style.display = "none";
+        teacherFields.style.display = "none";
+
+        enrollmentInput.name = "";
+        studentClassNameInput.name = "";
+        teacherClassNameInput.name = "";
+        subjectInput.name = "";
+
+        if (role === "student") {
+          studentFields.style.display = "block";
+          enrollmentInput.name = "enrollment_number";
+          studentClassNameInput.name = "class_name";
+        } else if (role === "teacher") {
+          teacherFields.style.display = "block";
+          teacherClassNameInput.name = "class_name";
+          subjectInput.name = "subject";
+        }
+      }
+      // Run on page load to set the correct initial state.
+      toggleFields();
+    </script>
+  </body>
+</html>

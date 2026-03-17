@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --background-color: #f4f7f8;
+        --card-bg-color: #ffffff;
+        --text-color: #333;
+        --subtle-text-color: #6c757d;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background: var(--background-color);
+        margin: 0;
+        color: var(--text-color);
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 20px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        background: var(--card-bg-color);
+        padding: 20px 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      }
+
+      .welcome-text h2 {
+        margin: 0;
+        color: var(--primary-color);
+        font-weight: 700;
+      }
+      .welcome-text p {
+        margin: 5px 0 0;
+        color: var(--subtle-text-color);
+      }
+
+      .header-actions {
+        position: relative;
+      }
+      .profile-pic {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2rem;
+        font-weight: bold;
+        cursor: pointer;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .profile-dropdown {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 75px;
+        background-color: white;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .profile-dropdown a {
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+      }
+      .profile-dropdown a:hover {
+        background-color: #f1f1f1;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+      }
+
+      .stat-card {
+        background: var(--card-bg-color);
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+      }
+      .stat-card h3 {
+        margin: 10px 0 5px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--subtle-text-color);
+      }
+      .stat-card .count {
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: var(--primary-color);
+      }
+
+      .nav-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+      }
+
+      .nav-card {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
+      }
+      .nav-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 123, 255, 0.3);
+      }
+      .nav-card h3 {
+        margin: 0 0 10px;
+        font-size: 1.5rem;
+      }
+      .nav-card p {
+        margin: 0;
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="welcome-text">
+          <h2>Admin Dashboard</h2>
+          <p>Welcome, {{ admin.username }}!</p>
+        </div>
+        <div class="header-actions">
+          <div class="profile-pic" id="profile-pic-btn">
+            <span>{{ admin.username[0]|upper }}</span>
+          </div>
+          <div id="profile-dropdown" class="profile-dropdown">
+            <a href="{{ url_for('view_profile', user_id=admin.id) }}"
+              >View Profile</a
+            >
+            <a href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <!-- Summary Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h3>Total Students</h3>
+          <p class="count">{{ total_students }}</p>
+        </div>
+        <div class="stat-card">
+          <h3>Total Teachers</h3>
+          <p class="count">{{ total_teachers }}</p>
+        </div>
+        <div class="stat-card">
+          <h3>Total Classes</h3>
+          <p class="count">{{ total_classes }}</p>
+        </div>
+        <div class="stat-card">
+          <h3>Today's Records</h3>
+          <p class="count">{{ today_attendance_count }}</p>
+        </div>
+      </div>
+
+      <!-- Navigation Links as Cards -->
+      <div class="nav-grid">
+        <a href="{{ url_for('admin_manage_users') }}" class="nav-card">
+          <h3>Manage Users</h3>
+          <p>Add, update, or deactivate user accounts.</p>
+        </a>
+        <a href="{{ url_for('admin_manage_classes') }}" class="nav-card">
+          <h3>Manage Classes</h3>
+          <p>View class and teacher assignments.</p>
+        </a>
+        <a href="{{ url_for('admin_reports') }}" class="nav-card">
+          <h3>Attendance Reports</h3>
+          <p>Export attendance data for all students.</p>
+        </a>
+      </div>
+    </div>
+    <script>
+      const profilePicBtn = document.getElementById("profile-pic-btn");
+      const dropdown = document.getElementById("profile-dropdown");
+
+      profilePicBtn.addEventListener("click", function () {
+        dropdown.style.display =
+          dropdown.style.display === "block" ? "none" : "block";
+      });
+
+      // Close dropdown if clicked outside
+      window.addEventListener("click", function (event) {
+        if (
+          !profilePicBtn.contains(event.target) &&
+          !dropdown.contains(event.target)
+        ) {
+          dropdown.style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>
