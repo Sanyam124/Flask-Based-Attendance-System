@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>📱 Phone Camera — Smart Attendance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0f1117;--card:#1e2235;--border:rgba(255,255,255,0.07);
+      --primary:#6366f1;--accent:#22d3ee;--green:#10b981;--red:#ef4444;
+      --text:#e4e6f0;--text2:#9ca3af;--text3:#6b7280;
+      --radius:14px;
+    }
+    html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+    .phone-layout{height:100%;display:flex;flex-direction:column;}
+
+    /* HEADER */
+    .phone-header{
+      padding:14px 16px;background:var(--card);border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+    }
+    .header-left h2{font-size:0.95rem;font-weight:800;margin-bottom:2px;}
+    .header-left p{color:var(--text3);font-size:0.72rem;}
+    .scan-badge{
+      background:rgba(99,102,241,0.15);color:var(--primary);border:1px solid rgba(99,102,241,0.3);
+      border-radius:20px;padding:5px 14px;font-size:0.78rem;font-weight:700;
+      display:flex;align-items:center;gap:6px;white-space:nowrap;
+    }
+
+    /* VIDEO */
+    .phone-video-wrap{position:relative;overflow:hidden;background:#000;flex:1;}
+    #phoneVideo{width:100%;height:100%;object-fit:cover;display:block;}
+    canvas{display:none;}
+
+    /* Scanning Ring */
+    .scan-ring{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;}
+    .scan-ring-inner{
+      width:160px;height:160px;border-radius:50%;
+      border:2px solid rgba(34,211,238,0.3);
+      animation:scanPulse 1.8s ease infinite;
+    }
+    @keyframes scanPulse{
+      0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(34,211,238,0.4);}
+      70%{transform:scale(1.05);box-shadow:0 0 0 22px rgba(34,211,238,0);}
+      100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(34,211,238,0);}
+    }
+
+    /* Progress bar */
+    .scan-progress-wrap{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.05);}
+    .scan-progress-bar{
+      height:100%;width:0%;
+      background:linear-gradient(90deg,var(--primary),var(--accent));
+      border-radius:0 3px 3px 0;transition:width 3.8s linear;
+    }
+
+    /* STATUS */
+    .phone-status{
+      padding:12px 16px;background:var(--card);border-top:1px solid var(--border);
+      text-align:center;flex-shrink:0;
+    }
+    .status-indicator{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 20px;border-radius:20px;font-size:0.82rem;font-weight:700;transition:all 0.35s;
+    }
+    .status-active{background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3);}
+    .status-scanning{background:rgba(99,102,241,0.15);color:var(--primary);border:1px solid rgba(99,102,241,0.3);}
+    .status-error{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pls 1.2s ease infinite;}
+    @keyframes pls{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.5)}}
+
+    /* RECOGNIZED LIST */
+    .recognized-list{background:var(--card);border-top:1px solid var(--border);max-height:130px;overflow-y:auto;flex-shrink:0;}
+    .rec-empty{padding:14px;text-align:center;color:var(--text3);font-size:0.78rem;}
+    .rec-row{
+      display:flex;align-items:center;gap:10px;padding:10px 14px;
+      border-bottom:1px solid var(--border);animation:slideIn 0.3s ease;
+    }
+    .rec-row:last-child{border-bottom:none;}
+    @keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+    .rec-avatar{
+      width:30px;height:30px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      display:flex;align-items:center;justify-content:center;
+      font-size:0.78rem;font-weight:700;color:white;
+    }
+    .rec-name{font-size:0.82rem;font-weight:700;flex:1;}
+    .rec-time{font-size:0.7rem;color:var(--text3);}
+    .rec-check{color:var(--green);font-size:0.9rem;}
+
+    /* STACKING TOASTS */
+    .phone-toast-container{
+      position:fixed;top:80px;right:14px;z-index:9999;
+      display:flex;flex-direction:column;gap:8px;align-items:flex-end;
+    }
+    .phone-toast{
+      background:rgba(16,185,129,0.95);color:white;
+      padding:12px 18px;border-radius:12px;font-size:0.85rem;font-weight:700;
+      box-shadow:0 6px 20px rgba(0,0,0,0.3);
+      display:flex;align-items:center;gap:10px;
+      transform:translateX(120%);opacity:0;
+      transition:all 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    .phone-toast.show{transform:translateX(0);opacity:1;}
+  </style>
+</head>
+<body>
+
+<div class="phone-toast-container" id="phone-toast-container"></div>
+
+<div class="phone-layout">
+  <div class="phone-header">
+    <div class="header-left">
+      <h2><i class="fas fa-camera" style="color:var(--accent);margin-right:6px"></i> Phone Camera Active</h2>
+      <p>{{ association.class_ref.name }} — {{ association.subject.name }} — Session {{ session_number }}</p>
+    </div>
+    <div class="scan-badge">
+      <i class="fas fa-user-check"></i>
+      <span id="scan-count">0</span> marked
+    </div>
+  </div>
+
+  <div class="phone-video-wrap">
+    <video id="phoneVideo" autoplay playsinline muted></video>
+    <canvas id="phoneCanvas"></canvas>
+    <div class="scan-ring"><div class="scan-ring-inner"></div></div>
+    <div class="scan-progress-wrap"><div class="scan-progress-bar" id="progress-bar"></div></div>
+  </div>
+
+  <div class="phone-status">
+    <div class="status-indicator status-active" id="statusIndicator">
+      <div class="status-dot"></div>
+      <span id="statusText">Starting camera...</span>
+    </div>
+  </div>
+
+  <div class="recognized-list" id="recognized-list">
+    <div class="rec-empty" id="rec-empty">
+      <i class="fas fa-camera" style="margin-right:6px;opacity:0.4"></i> Recognized students appear here
+    </div>
+  </div>
+</div>
+
+<script>
+  const assocId = {{ association.id | tojson }};
+  const sessionNumber = {{ session_number | tojson }};
+  let recognizedCount = 0;
+  const markedSet = new Set();
+
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  function playBeep() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.15);
+  }
+
+  function spawnPhoneToast(msg) {
+    const container = document.getElementById('phone-toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'phone-toast';
+    toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3000);
+  }
+
+  function addRecognizedRow(rec) {
+    const emptyEl = document.getElementById('rec-empty');
+    if (emptyEl) emptyEl.remove();
+    const list = document.getElementById('recognized-list');
+    const row = document.createElement('div');
+    row.className = 'rec-row';
+    const now = rec.timestamp || new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    row.innerHTML = `
+      <div class="rec-avatar">${rec.username[0].toUpperCase()}</div>
+      <div class="rec-name">${rec.username}</div>
+      <div class="rec-time">${now}</div>
+      <i class="fas fa-check-circle rec-check"></i>`;
+    list.appendChild(row);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  const video = document.getElementById('phoneVideo');
+  const canvas = document.getElementById('phoneCanvas');
+  const ctx = canvas.getContext('2d');
+  const statusText = document.getElementById('statusText');
+  const statusIndicator = document.getElementById('statusIndicator');
+  const progressBar = document.getElementById('progress-bar');
+
+  function animateProgress() {
+    progressBar.style.transition = 'none';
+    progressBar.style.width = '0%';
+    setTimeout(() => { progressBar.style.transition = 'width 3.8s linear'; progressBar.style.width = '100%'; }, 50);
+  }
+
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+  }).then(stream => {
+    video.srcObject = stream;
+    video.play();
+    statusText.textContent = 'Scanning for faces...';
+    statusIndicator.className = 'status-indicator status-scanning';
+    startScanLoop();
+  }).catch(err => {
+    statusText.textContent = 'Camera error: ' + err.message;
+    statusIndicator.className = 'status-indicator status-error';
+  });
+
+  function startScanLoop() {
+    setInterval(() => {
+      if (video.paused || video.ended || !video.srcObject) return;
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      ctx.drawImage(video, 0, 0);
+      animateProgress();
+      const imgData = canvas.toDataURL('image/jpeg', 0.75);
+
+      fetch('/teacher/recognize_frame', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imgData, assoc_id: assocId, session_number: sessionNumber })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.present && data.present.length > 0) {
+          data.present.forEach(rec => {
+            if (markedSet.has(rec.username)) return;
+            markedSet.add(rec.username);
+            recognizedCount++;
+            document.getElementById('scan-count').textContent = recognizedCount;
+            playBeep();
+            spawnPhoneToast(`${rec.username} marked present!`);
+            addRecognizedRow(rec);
+          });
+        }
+        statusText.textContent = 'Scanning for faces...';
+        statusIndicator.className = 'status-indicator status-scanning';
+      })
+      .catch(() => {
+        statusText.textContent = 'Connection issue — retrying...';
+        statusIndicator.className = 'status-indicator status-error';
+        setTimeout(() => {
+          statusIndicator.className = 'status-indicator status-scanning';
+          statusText.textContent = 'Scanning for faces...';
+        }, 2000);
+      });
+    }, 4000);
+  }
+</script>
+</body>
+</html>
