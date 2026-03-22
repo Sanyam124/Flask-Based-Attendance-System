@@ -14,12 +14,17 @@ def student_dashboard():
     student_id = session.get('user_id')
     student_obj = User.query.get_or_404(student_id)
 
+    from utils import get_face_folder_name
     profile_image_url = None
-    student_face_dir = os.path.join(current_app.static_folder, 'faces', student_obj.username)
+    face_rel_dir = get_face_folder_name(student_obj)
+    student_face_dir = os.path.join(current_app.static_folder, 'faces', face_rel_dir)
+    
     if os.path.exists(student_face_dir):
         face_samples = sorted([f for f in os.listdir(student_face_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))])
         if face_samples:
-            profile_image_url = f"faces/{student_obj.username}/{face_samples[0]}"
+            # Use forward slashes for URLs
+            url_friendly_path = face_rel_dir.replace(os.sep, '/')
+            profile_image_url = f"faces/{url_friendly_path}/{face_samples[0]}"
     
     has_samples = profile_image_url is not None
 
@@ -29,7 +34,7 @@ def student_dashboard():
             joinedload(Attendance.subject),
             joinedload(Attendance.class_ref)
         ) \
-        .order_by(Attendance.date.desc(), Attendance.session.desc()).all()
+        .order_by(Attendance.timestamp.desc()).all()
 
     total_records = len(attendance_records)
     present_count = sum(1 for r in attendance_records if r.status == 'present')
@@ -67,74 +72,32 @@ def student_dashboard():
                            has_active_token=has_active_token,
                            profile_image_url=profile_image_url)
 
-@student_bp.route('/student/capture_samples')
-@login_required(role='student')
-def capture_samples():
-    username = session.get('username')
-    save_path = os.path.join(KNOWN_FACES_DIR, username)
-    # FIX 8: Block re-registration — student can't redo face capture once done
-    if os.path.exists(save_path) and len(os.listdir(save_path)) >= 50:
-        flash("Your face is already registered. Contact an admin if you need to re-register.", "info")
-        return redirect(url_for('student.student_dashboard'))
-    # FIX 1: Only allow capture if admin issued a registration token
-    student = User.query.filter_by(username=username).first()
-    from datetime import datetime
-    if not student.registration_token:
-        flash("Face registration must be initiated by your admin. Please contact them.", "warning")
-        return redirect(url_for('student.student_dashboard'))
-    if student.registration_token_expires and student.registration_token_expires < datetime.now():
-        student.registration_token = None
-        student.registration_token_expires = None
-        db.session.commit()
-        flash("Your registration link has expired. Please ask your admin for a new one.", "danger")
-        return redirect(url_for('student.student_dashboard'))
-    return render_template('capture_samples.html', username=username)
-
-@student_bp.route('/student/video_feed')
-@login_required(role='student')
-def student_video_feed():
-    from attendance_logic import FaceCapture
-    username = session.get('username')
-    # FIX 8: Double-check server-side — never trust client to enforce this
-    save_path = os.path.join(KNOWN_FACES_DIR, username)
-    if os.path.exists(save_path) and len(os.listdir(save_path)) >= 50:
-        return "Registration complete", 403
-    return Response(FaceCapture.stream_capture(username), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-@student_bp.route('/student/check_capture_status')
-@login_required(role='student')
-def student_check_capture_status():
-    # FIX 4: Never use URL param for identity — always use session
-    from extensions import frs
-    username = session.get('username')
-    save_path = os.path.join(KNOWN_FACES_DIR, username)
-    completed = os.path.exists(save_path) and len(os.listdir(save_path)) >= 50
-    if completed:
-        # Clear the registration token after successful completion
-        student = User.query.filter_by(username=username).first()
-        if student:
-            student.registration_token = None
-            student.registration_token_expires = None
-            db.session.commit()
-        frs.rebuild_encodings()
-        flash("Face samples captured and system updated!", "success")
-    return jsonify({"completed": completed})
+# Removed legacy 50-sample face capture routes.
+# Face registration is now handled by Admins via single high-quality photo upload.
 
 @student_bp.route('/profile/<int:user_id>')
 @login_required()
 def view_profile(user_id):
     if user_id != session.get('user_id'):
         flash("You can only view your own profile.", "danger")
-        return redirect(url_for(session.get('user_role') + '.' + session.get('user_role') + '_dashboard'))
+        dashboard_map = {
+            'student': 'student.student_dashboard',
+            'teacher': 'teacher.teacher_dashboard',
+            'admin':   'admin.admin_dashboard'
+        }
+        return redirect(url_for(dashboard_map.get(session.get('user_role'), 'auth.login')))
 
     user = User.query.get_or_404(user_id)
 
     profile_image_url = None
     if user.role == 'student':
-        student_face_dir = os.path.join(current_app.static_folder, 'faces', user.username)
+        from utils import get_face_folder_name
+        face_rel_dir = get_face_folder_name(user)
+        student_face_dir = os.path.join(current_app.static_folder, 'faces', face_rel_dir)
         if os.path.exists(student_face_dir):
             face_samples = sorted([f for f in os.listdir(student_face_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))])
             if face_samples:
-                profile_image_url = f"faces/{user.username}/{face_samples[0]}"
+                url_friendly_path = face_rel_dir.replace(os.sep, '/')
+                profile_image_url = f"faces/{url_friendly_path}/{face_samples[0]}"
 
     return render_template('profile.html', user=user, profile_image_url=profile_image_url)

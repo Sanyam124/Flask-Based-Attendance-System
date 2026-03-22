@@ -124,18 +124,25 @@
     const ctId = document.getElementById('class-select').value;
     const sel  = document.getElementById('session-select');
     if (!date || !ctId) { sel.innerHTML = '<option value="">— Select class & date first —</option>'; return; }
+    
     sel.innerHTML = '<option value="">Loading...</option>';
-    const r = await fetch(`/teacher/api/sessions_for_date?date=${date}&class_teacher_id=${ctId}`);
-    const data = await r.json();
-    sel.innerHTML = '';
-    if (data.sessions?.length) {
-      data.sessions.forEach(n => {
-        const o = document.createElement('option');
-        o.value = n; o.textContent = `Session ${n}`;
-        if (n == {{ selected_session or 'null' }}) o.selected = true;
-        sel.appendChild(o);
-      });
-    } else { sel.innerHTML = '<option value="">No sessions found</option>'; }
+    try {
+      const r = await fetch(`/teacher/api/sessions_for_date?date=${date}&class_teacher_id=${ctId}`);
+      if (!r.ok) throw new Error('Network response was not ok');
+      const data = await r.json();
+      sel.innerHTML = '';
+      if (data.sessions?.length) {
+        data.sessions.forEach(n => {
+          const o = document.createElement('option');
+          o.value = n; o.textContent = `Session ${n}`;
+          if (n == {{ selected_session or 'null' }}) o.selected = true;
+          sel.appendChild(o);
+        });
+      } else { sel.innerHTML = '<option value="">No sessions found</option>'; }
+    } catch (e) {
+      console.error("Fetch error:", e);
+      sel.innerHTML = '<option value="">Error loading sessions</option>';
+    }
   }
   document.getElementById('class-select').addEventListener('change', fetchSessions);
   document.getElementById('date-select').addEventListener('change', fetchSessions);

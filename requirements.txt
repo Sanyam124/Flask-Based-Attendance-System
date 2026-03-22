@@ -4,7 +4,7 @@ Flask-SocketIO
 python-dotenv
 opencv-python
 face-recognition
-numpy
+numpy<2.0.0
 scikit-learn
 pandas
 eventlet

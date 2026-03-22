@@ -12,18 +12,22 @@ import numpy as np
 from PIL import Image
 from io import BytesIO
 from blueprints.auth import login_required
-from utils import get_next_session_number
+from utils import get_next_session_number, slugify
+from config import ATTENDANCE_SESSION_TIMEOUT_MINUTES
+import os
 
 teacher_bp = Blueprint('teacher', __name__)
 
 @teacher_bp.route("/teacher/get_tunnel_url")
 def get_tunnel_url():
+    """Returns the current public tunnel URL for remote camera access."""
     pub = current_app.jinja_env.globals.get('get_public_url', lambda: None)()
     return jsonify({"url": pub})
 
 @teacher_bp.route("/teacher/dashboard")
 @login_required(role='teacher')
 def teacher_dashboard():
+    """Teacher's main landing page with assigned classes."""
     teacher_id = session.get("user_id")
     teacher = User.query.get_or_404(teacher_id)
     classes_taught = ClassTeacher.query.join(Class).filter(
@@ -38,6 +42,7 @@ def teacher_dashboard():
 @teacher_bp.route('/teacher/update_attendance', methods=['GET', 'POST'])
 @login_required(role='teacher')
 def update_attendance():
+    """Page to review and manually edit past attendance records."""
     teacher_id = session.get('user_id')
     classes_taught = ClassTeacher.query.filter_by(teacher_id=teacher_id).options(
         joinedload(ClassTeacher.class_ref),
@@ -80,6 +85,7 @@ def update_attendance():
 @teacher_bp.route('/teacher/handle_update', methods=['POST'])
 @login_required(role='teacher')
 def handle_update_attendance():
+    """Handles the submission of edited attendance records."""
     teacher_id = session.get('user_id')
     ct_id = request.form.get('class_teacher_id', type=int)
     update_date_str = request.form.get('date')
@@ -130,6 +136,7 @@ def handle_update_attendance():
 @teacher_bp.route("/teacher/manual_attendance", methods=["GET", "POST"])
 @login_required(role='teacher')
 def manual_attendance():
+    """Allows teachers to mark attendance manually via a student list."""
     teacher_id = session.get("user_id")
     classes_taught = ClassTeacher.query.join(Class).filter(
         ClassTeacher.teacher_id == teacher_id,
@@ -197,6 +204,7 @@ def manual_attendance():
 @teacher_bp.route("/teacher/attendance_reports")
 @login_required(role='teacher')
 def teacher_attendance_reports():
+    """Generates attendance statistics and percentages per student."""
     teacher_id = session.get("user_id")
     classes_taught = ClassTeacher.query.filter_by(teacher_id=teacher_id).options(
         joinedload(ClassTeacher.class_ref), 
@@ -237,61 +245,69 @@ def teacher_attendance_reports():
 @teacher_bp.route('/teacher/attendance/<int:class_teacher_id>')
 @login_required(role='teacher')
 def teacher_attendance(class_teacher_id):
+    """Main live attendance marking page (for laptop camera)."""
     assoc = ClassTeacher.query.get_or_404(class_teacher_id)
     if assoc.teacher_id != session.get('user_id'):
         return redirect(url_for('teacher.teacher_dashboard'))
     session_number = get_next_session_number(assoc.class_id, assoc.subject_id, date.today())
     students_in_class = User.query.filter_by(class_id=assoc.class_id, role='student', is_active=True).all()
-    return render_template('teacher_attendance.html', students=students_in_class, association=assoc, session_number=session_number)
+    return render_template('teacher_attendance.html', students=students_in_class, association=assoc, session_number=session_number, session_timeout=ATTENDANCE_SESSION_TIMEOUT_MINUTES)
 
 @teacher_bp.route('/teacher/recognize_frame', methods=['POST'])
+@login_required(role='teacher')
 def recognize_frame():
+    """API for phone camera: processes a single frame and returns recognized student info."""
     from extensions import frs
     data = request.json
     image_data = base64.b64decode(data['image'].split(',')[1])
     class_teacher_id = data['assoc_id']
     session_number = data['session_number'] 
+    
     image = Image.open(BytesIO(image_data)).convert('RGB')
     rgb_array = np.array(image)
-    # Convert RGB (from browser) to BGR (for OpenCV)
     frame = cv2.cvtColor(rgb_array, cv2.COLOR_RGB2BGR)
-    
-    print(f"\n[PHONE DEBUG] Received frame of shape: {frame.shape}")
-    
-    recognized_names = frs.recognize_faces(frame)
-    print(f"[PHONE DEBUG] Faces recognized by Haar: {recognized_names}")
     
     assoc = ClassTeacher.query.get(class_teacher_id)
     if not assoc:
-        print("[PHONE DEBUG] ERROR: Invalid Association ID")
         return jsonify({"error": "Invalid association"}), 400
         
-    valid_students_in_class = {
-        user.username for user in User.query.filter_by(
-            class_id=assoc.class_id, role='student', is_active=True
-        ).all()
-    }
-    print(f"[PHONE DEBUG] Valid students in class DB: {valid_students_in_class}")
+    from utils import get_face_folder_name
+    
+    # Path prefix for isolation: org_Name/class_Name
+    org_slug = f"org_{slugify(assoc.class_ref.organization.name)}"
+    class_slug = f"class_{slugify(assoc.class_ref.name)}" if assoc.class_id else "class_unassigned"
+    path_prefix = os.path.join(org_slug, class_slug)
+    
+    recognized_ids = frs.recognize_faces(frame, path_prefix=path_prefix)
+        
+    # Map recognized paths back to student objects
+    students_in_class = User.query.filter_by(
+        class_id=assoc.class_id, role='student', is_active=True
+    ).all()
+    path_to_student = { get_face_folder_name(s): s for s in students_in_class }
 
     today = date.today()
     marked_students = []
 
-    for name in recognized_names:
-        if name in valid_students_in_class:
-            student = User.query.filter_by(username=name).first()
-            if student:
-                existing_record = Attendance.query.filter_by(
-                    student_id=student.id, date=today, subject_id=assoc.subject_id, session=session_number
-                ).first()
+    for path in recognized_ids:
+        student = path_to_student.get(path)
+        if student:
+            existing_record = Attendance.query.filter_by(
+                student_id=student.id, date=today, subject_id=assoc.subject_id, session=session_number
+            ).first()
 
-                if not existing_record:
-                    new_attendance = Attendance(
-                        student_id=student.id, date=today, subject_id=assoc.subject_id,
-                        session=session_number, status='present', class_id=assoc.class_id, 
-                        marked_by_id=assoc.teacher_id
-                    )
-                    db.session.add(new_attendance)
-                    marked_students.append({'username': name, 'timestamp': datetime.now().strftime("%H:%M:%S")})
+            if not existing_record:
+                new_attendance = Attendance(
+                    student_id=student.id,
+                    date=today,
+                    subject_id=assoc.subject_id,
+                    session=session_number,
+                    status='present',
+                    class_id=assoc.class_id,
+                    marked_by_id=assoc.teacher_id
+                )
+                db.session.add(new_attendance)
+                marked_students.append({'username': student.username, 'timestamp': datetime.now().strftime("%H:%M:%S")})
 
     if marked_students:
         db.session.commit()
@@ -300,13 +316,32 @@ def recognize_frame():
 @teacher_bp.route('/teacher/video_feed/<int:class_teacher_id>/<int:session_number>')
 @login_required(role='teacher')
 def teacher_video_feed(class_teacher_id, session_number):
+    """MJPEG generator for teacher's laptop camera feed."""
     from extensions import frs
-    from attendance_logic import FaceCapture
-    return Response(FaceCapture.stream_attendance(current_app, frs, class_teacher_id, session_number), mimetype='multipart/x-mixed-replace; boundary=frame')
+    from attendance_logic import stream_attendance_feed
+    from utils import get_face_folder_name
+    
+    assoc = ClassTeacher.query.get_or_404(class_teacher_id)
+    students_in_class = User.query.filter_by(
+        class_id=assoc.class_id, role='student', is_active=True
+    ).all()
+    
+    # Set of valid student paths for coloring bounding boxes
+    student_paths = { get_face_folder_name(s) for s in students_in_class }
+    
+    org_slug = f"org_{slugify(assoc.class_ref.organization.name)}"
+    class_slug = f"class_{slugify(assoc.class_ref.name)}" if assoc.class_id else "class_unassigned"
+    path_prefix = os.path.join(org_slug, class_slug)
+    
+    return Response(
+        stream_attendance_feed(frs, path_prefix, student_paths),
+        mimetype='multipart/x-mixed-replace; boundary=frame'
+    )
 
 @teacher_bp.route('/teacher/attendance_status/<int:class_teacher_id>')
 @login_required(role='teacher')
 def attendance_status(class_teacher_id):
+    """Returns currently marked present students for real-time dashboard updates."""
     assoc = ClassTeacher.query.get_or_404(class_teacher_id)
     today = date.today()
     current_session = request.args.get('session', type=int)
@@ -329,6 +364,7 @@ def attendance_status(class_teacher_id):
 @teacher_bp.route("/teacher/end_session/<int:class_teacher_id>/<int:session_number>", methods=["POST"])
 @login_required(role="teacher")
 def end_session(class_teacher_id, session_number):
+    """Ends the current attendance session and marks unmarked students as absent."""
     assoc = ClassTeacher.query.get_or_404(class_teacher_id)
     if assoc.teacher_id != session.get('user_id'):
         return jsonify({"status": "error", "message": "Unauthorized"}), 403
@@ -350,13 +386,16 @@ def end_session(class_teacher_id, session_number):
     return jsonify({"status": "ended", "redirect_url": url_for('teacher.teacher_dashboard')})
 
 @teacher_bp.route('/teacher/phone_camera/<int:class_teacher_id>/<int:session_number>')
+@login_required(role='teacher')
 def phone_camera(class_teacher_id, session_number):
-    """Mobile-optimized camera page — teacher opens this URL on their phone."""
+    """Mobile-optimized camera page for scanning from a phone."""
     assoc = ClassTeacher.query.get_or_404(class_teacher_id)
     return render_template('phone_camera.html', association=assoc, session_number=session_number)
-@teacher_bp.route('/api/sessions_for_date')
+
+@teacher_bp.route('/teacher/api/sessions_for_date')
 @login_required(role='teacher')
 def sessions_for_date():
+    """API for fetching available session numbers for a specific day."""
     date_str = request.args.get('date')
     ct_id = request.args.get('class_teacher_id', type=int)
     if not date_str or not ct_id:
@@ -376,11 +415,12 @@ def sessions_for_date():
 @teacher_bp.route('/teacher/export_attendance/<int:class_teacher_id>')
 @login_required(role='teacher')
 def export_attendance(class_teacher_id):
+    """Exports raw attendance records for a class/subject to CSV."""
     teacher_id = session.get('user_id')
     assoc = ClassTeacher.query.get_or_404(class_teacher_id)
     
     if assoc.teacher_id != teacher_id:
-        flash("Unauthorized access to this class's records.", "danger")
+        flash("Unauthorized access to records.", "danger")
         return redirect(url_for('teacher.teacher_dashboard'))
 
     attendance_records = Attendance.query.filter_by(
@@ -388,7 +428,9 @@ def export_attendance(class_teacher_id):
         subject_id=assoc.subject_id
     ).options(
         joinedload(Attendance.student)
-    ).order_by(Attendance.date, Attendance.session, User.username).all()
+    ).all()
+    
+    attendance_records = sorted(attendance_records, key=lambda r: (r.date, r.session, r.student.username))
 
     si = StringIO()
     writer = csv.writer(si)
@@ -417,6 +459,7 @@ def export_attendance(class_teacher_id):
 @teacher_bp.route('/teacher/export_summary/<int:class_teacher_id>')
 @login_required(role='teacher')
 def export_summary(class_teacher_id):
+    """Exports attendance summary (percentages) for a class/subject to CSV."""
     teacher_id = session.get('user_id')
     assoc = ClassTeacher.query.get_or_404(class_teacher_id)
     
