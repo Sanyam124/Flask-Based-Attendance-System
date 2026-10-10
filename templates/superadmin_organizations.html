@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block page_title %}Manage Organizations{% endblock %}
+{% block topbar_badge %}Super Admin Panel{% endblock %}
+
+{% block nav_links %}
+<a href="{{ url_for('system.superadmin_dashboard') }}" class="nav-link {% if request.endpoint == 'system.superadmin_dashboard' %}active{% endif %}"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="{{ url_for('system.superadmin_organizations') }}" class="nav-link {% if 'organization' in request.endpoint %}active{% endif %}"><i class="fas fa-building"></i> Organizations</a>
+<a href="{{ url_for('system.superadmin_principals') }}" class="nav-link {% if 'principal' in request.endpoint %}active{% endif %}"><i class="fas fa-user-tie"></i> Principals</a>
+{% endblock %}
+
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar" style="background: linear-gradient(135deg, var(--green), #059669);">SA</div>
+  <div class="user-info">
+    <div class="user-name">System Admin</div>
+    <div class="user-role">Super Administrator</div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block extra_css %}
+<style>
+.confirm-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.65); z-index: 999;
+    align-items: center; justify-content: center;
+}
+.confirm-modal-overlay.active { display: flex; }
+.confirm-modal {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 32px; max-width: 500px; width: 90%;
+    animation: slideIn 0.2s ease;
+}
+@keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal-danger-box {
+    background: rgba(239,68,68,0.08); border-left: 3px solid var(--red); border-radius: 6px;
+    padding: 12px 16px; margin: 14px 0; font-size: 0.85rem; color: var(--text2); line-height: 1.7;
+}
+.modal-danger-box strong { color: var(--red); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 24px;">
+    <h3 class="card-title"><i class="fas fa-plus"></i> Create New Organization</h3>
+    <form method="POST" class="mt-6 flex gap-4 items-center">
+        <input type="text" name="name" placeholder="School/Organization Name (e.g. Parul University)" required style="flex: 1;">
+        <button type="submit" class="btn btn-primary" style="white-space: nowrap;"><i class="fas fa-save"></i> Create</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3 class="card-title">Active Organizations</h3>
+    <div class="table-container mt-6">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Organization Name</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for org in organizations %}
+                <tr>
+                    <td>{{ org.id }}</td>
+                    <td class="font-bold">{{ org.name }}</td>
+                    <td class="text-muted">{{ org.created_at.strftime('%Y-%m-%d') if org.created_at else 'N/A' }}</td>
+                    <td style="display:flex; gap:6px;">
+                        <a href="{{ url_for('system.edit_organization', org_id=org.id) }}"
+                           class="btn btn-sm" style="background: rgba(99,102,241,0.15); color: var(--primary); border: 1px solid rgba(99,102,241,0.3);"
+                           title="Edit organization name">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <button class="btn btn-sm" style="background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3);"
+                            onclick="openDeleteOrgModal('{{ org.id }}', '{{ org.name }}')" title="Delete organization">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align:center;" class="text-muted">No organizations exist yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Delete Org Modal -->
+<div class="confirm-modal-overlay" id="deleteOrgModal">
+    <div class="confirm-modal">
+        <h3 style="color: var(--red); margin-bottom:4px;"><i class="fas fa-exclamation-triangle"></i> Delete Organization</h3>
+        <p class="text-muted text-sm" id="modal-org-name" style="margin-bottom:8px;"></p>
+        <div class="modal-danger-box">
+            <strong>⚠️ This is a permanent, irreversible action.</strong><br>
+            Deleting this organization will permanently remove:
+            <ul style="margin: 6px 0 0 16px;">
+                <li>All principals, teachers, and students in this school</li>
+                <li>All classes and subject assignments</li>
+                <li>All biometric face data stored for this school</li>
+            </ul>
+            <br>
+            Use this only when an institution has fully left the platform.
+            Attendance records will also be removed.
+        </div>
+        <form method="POST" id="deleteOrgForm">
+            <div class="form-group">
+                <label>Type the organization name exactly to confirm: <strong id="modal-org-confirm"></strong></label>
+                <input type="text" name="confirm_name" placeholder="Type organization name..." required autocomplete="off">
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="btn" style="background: rgba(239,68,68,0.25); color: var(--red); border: 1px solid rgba(239,68,68,0.4);">
+                    <i class="fas fa-trash"></i> Permanently Delete
+                </button>
+                <button type="button" onclick="closeModal()" class="btn" style="background: var(--bg3); color: var(--text2);">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openDeleteOrgModal(orgId, orgName) {
+    document.getElementById('modal-org-name').textContent = orgName;
+    document.getElementById('modal-org-confirm').textContent = orgName;
+    document.getElementById('deleteOrgForm').action = `/system/organizations/delete/${orgId}`;
+    document.getElementById('deleteOrgModal').classList.add('active');
+}
+function closeModal() {
+    document.querySelectorAll('.confirm-modal-overlay').forEach(m => m.classList.remove('active'));
+}
+</script>
+{% endblock %}

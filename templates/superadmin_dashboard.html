@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block page_title %}Global System Dashboard{% endblock %}
+{% block topbar_badge %}Super Admin Panel{% endblock %}
+
+{% block nav_links %}
+<a href="{{ url_for('system.superadmin_dashboard') }}" class="nav-link {% if request.endpoint == 'system.superadmin_dashboard' %}active{% endif %}"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="{{ url_for('system.superadmin_organizations') }}" class="nav-link {% if 'organization' in request.endpoint %}active{% endif %}"><i class="fas fa-building"></i> Organizations</a>
+<a href="{{ url_for('system.superadmin_principals') }}" class="nav-link {% if 'principal' in request.endpoint %}active{% endif %}"><i class="fas fa-user-tie"></i> Principals</a>
+{% endblock %}
+
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar" style="background: linear-gradient(135deg, var(--green), #059669);">SA</div>
+  <div class="user-info">
+    <div class="user-name">System Admin</div>
+    <div class="user-role">Super Administrator</div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon" style="background: rgba(99,102,241,0.1); color: var(--primary);">
+      <i class="fas fa-building"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-val">{{ total_organizations }}</div>
+      <div class="stat-label">Active Schools / Orgs</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background: rgba(16,185,129,0.1); color: var(--green);">
+      <i class="fas fa-user-tie"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-val">{{ total_principals }}</div>
+      <div class="stat-label">Registered Principals</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3 class="card-title">System Administration Guide</h3>
+  <div class="divider"></div>
+  <p class="text-muted" style="line-height: 1.6; margin-bottom: 12px;">
+    Welcome to the Global Multi-Tenant Control Panel. From here, you control the overarching infrastructure.
+  </p>
+  <ul style="color: var(--text2); margin-left: 20px; line-height: 1.8;">
+    <li>Create isolated <strong>Organizations</strong> (e.g., Parul University, Stanford High).</li>
+    <li>Appoint <strong>Principals</strong> and designate them to a specific Organization.</li>
+    <li>Once appointed, a Principal logs into their own dashboard to independently manage Teachers, Students, and Classes.</li>
+  </ul>
+</div>
+{% endblock %}

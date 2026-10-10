@@ -200,6 +200,7 @@ def edit_organization(org_id):
                 from extensions import frs
                 frs.rebuild_encodings()
             except Exception as e:
+                flash(f"Organization renamed in DB, but failed to move folder: {e}", "warning")
 
         flash(f"Organization renamed to '{new_name}' successfully.", "success")
         return redirect(url_for('system.superadmin_organizations'))

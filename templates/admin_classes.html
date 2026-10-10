@@ -1,140 +1,215 @@
 {% extends "base.html" %}
-
-{% block title %}Manage Classes — Smart Attendance{% endblock %}
+{% block page_title %}Manage Classes{% endblock %}
+{% block topbar_badge %}Principal Panel{% endblock %}
 
 {% block nav_links %}
-<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link"><i class="fas fa-chart-line"></i> Dashboard</a>
-<a href="{{ url_for('admin.admin_manage_users') }}" class="nav-link"><i class="fas fa-users-cog"></i> Manage Users</a>
-<a href="{{ url_for('admin.admin_manage_classes') }}" class="nav-link active"><i class="fas fa-school"></i> Manage Classes</a>
-<a href="{{ url_for('admin.admin_reports') }}" class="nav-link"><i class="fas fa-file-invoice"></i> Reports</a>
+<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link {% if request.endpoint == 'admin.admin_dashboard' %}active{% endif %}"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="{{ url_for('admin.admin_manage_students') }}" class="nav-link {% if 'admin_manage_students' in request.endpoint %}active{% endif %}"><i class="fas fa-user-graduate"></i> Students</a>
+<a href="{{ url_for('admin.admin_teachers') }}" class="nav-link {% if 'admin_teachers' in request.endpoint %}active{% endif %}"><i class="fas fa-chalkboard-teacher"></i> Teachers</a>
+<a href="{{ url_for('admin.admin_manage_subjects') }}" class="nav-link {% if 'admin_manage_subjects' in request.endpoint %}active{% endif %}"><i class="fas fa-book"></i> Subjects</a>
+<a href="{{ url_for('admin.admin_classes') }}" class="nav-link {% if 'admin_classes' in request.endpoint or 'admin_manage_classes' in request.endpoint or 'admin_view_class' in request.endpoint %}active{% endif %}"><i class="fas fa-school"></i> Manage Classes</a>
+<a href="{{ url_for('admin.admin_manage_users') }}" class="nav-link {% if 'admin_users' in request.endpoint %}active{% endif %}"><i class="fas fa-users-cog"></i> All Users</a>
+<a href="{{ url_for('admin.admin_reports') }}" class="nav-link {% if 'admin_reports' in request.endpoint %}active{% endif %}"><i class="fas fa-file-invoice"></i> Reports</a>
 {% endblock %}
 
-{% block page_title %}Class Registry{% endblock %}
-{% block topbar_badge %}Management Console{% endblock %}
 
 {% block sidebar_user %}
 <div class="user-card">
-  <div class="user-avatar" style="background: var(--bg3);">A</div>
+  <div class="user-avatar" style="background: linear-gradient(135deg, var(--red), var(--yellow));">{{ session.get('username', 'A')[0]|upper }}</div>
   <div class="user-info">
-    <div class="user-name">{{ session.get('username', 'Admin') }}</div>
-    <div class="user-role">Administrator</div>
+    <div class="user-name">{{ session.get('username', 'Principal') }}</div>
+    <div class="user-role">Principal</div>
   </div>
 </div>
 {% endblock %}
 
+
 {% block extra_css %}
-.assignment-cell { padding-top: 14px; padding-bottom: 14px; }
-.assignment-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
-.assignment-chip {
-  background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
-  padding: 4px 10px; display: flex; align-items: center; gap: 8px;
-  font-size: 0.78rem; transition: all 0.2s;
-}
-.assignment-chip:hover { border-color: var(--primary); }
-.assignment-chip strong { color: var(--text); }
-.assignment-chip .subject { color: var(--text3); display: flex; align-items: center; gap: 4px; }
-.assignment-chip .subject::before { content: '•'; color: var(--primary); }
-
-.status-tag { 
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
-}
-.tag-active { background: rgba(16,185,129,0.12); color: var(--green); }
-.tag-inactive { background: rgba(239,68,68,0.12); color: var(--red); }
-
-.class-row { transition: background 0.2s; }
-.class-row.inactive { opacity: 0.6; }
-.action-group { display: flex; gap: 8px; justify-content: flex-end; }
+<style>
+  .table-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); }
+  .table-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .table-header h3 { font-size: 1rem; font-weight: 600; color: var(--text); }
+  
+  .badge-cyan   { background: rgba(34,211,238,0.1); color: var(--accent); }
+  .badge-purple { background: rgba(99,102,241,0.1); color: var(--primary); }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="toolbar" style="margin-bottom: 24px;">
-  <div style="flex:1">
-    <h3 style="font-size:0.95rem; font-weight:700; color:var(--text)">Academic Structure</h3>
-    <p style="font-size:0.8rem; color:var(--text3)">Overview of active classes and teacher assignments.</p>
-  </div>
-  <!-- Classes are usually created via DB or a simple UI, leaving space for a Create Class button if needed in future -->
+    <div class="header-section" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; margin-bottom:30px;">
+        <div>
+            <h1 class="page-title" style="font-size:1.8rem; margin-bottom:5px;">Class Management</h1>
+            <p class="page-subtitle" style="color:var(--text2);">Organize sections and manage student rosters.</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="toggleCreateForm()">
+                <i class="fas fa-plus"></i> Create New Class
+            </button>
+        </div>
+    </div>
+
+    <!-- Hidden Create Form -->
+    <div id="create-class-form" class="card" style="display:none; margin-bottom:30px; animation: slideDown 0.3s ease-out;">
+        <h3 style="margin-bottom:15px; font-size:1rem;">Add Institutional Section</h3>
+        <form method="POST" style="display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" name="class_name" placeholder="Class Name (e.g. BCA Sem 3)" required style="flex:1; min-width:200px;">
+            <button type="submit" class="btn btn-success">Save Class</button>
+            <button type="button" class="btn btn-ghost" onclick="toggleCreateForm()">Cancel</button>
+        </form>
+    </div>
+
+    <!-- Class List -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3>Registered Classes ({{ class_data|length }})</h3>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Class Name</th>
+                        <th>Students</th>
+                        <th>Teachers</th>
+                        <th>Status</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in class_data %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('admin.admin_view_class_students', class_id=item.cls.id) }}" style="text-decoration:none; color:inherit;">
+                                <strong class="hover-primary">{{ item.cls.name }}</strong> <i class="fas fa-external-link-alt" style="font-size:0.7rem; opacity:0.5;"></i>
+                            </a>
+                        </td>
+                        <td><span class="badge badge-cyan">{{ item.student_count }}</span></td>
+                        <td><span class="badge badge-purple">{{ item.teacher_count }}</span></td>
+                        <td>
+                            {% if item.cls.is_active %}
+                            <span class="badge badge-green">Active</span>
+                            {% else %}
+                            <span class="badge badge-yellow">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-right">
+                          <div class="action-dropdown">
+                            <button class="btn btn-sm btn-ghost" onclick="toggleDropdown('menu-{{ item.cls.id }}')">
+                              <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <div class="dropdown-menu" id="menu-{{ item.cls.id }}">
+                              <a href="{{ url_for('admin.admin_edit_class', class_id=item.cls.id) }}" class="dropdown-item">
+                                <i class="fas fa-edit"></i> Edit Roster
+                              </a>
+                              <a href="{{ url_for('admin.admin_view_class_students', class_id=item.cls.id) }}" class="dropdown-item">
+                                <i class="fas fa-users-viewfinder"></i> View Students
+                              </a>
+                              {% if item.cls.is_active %}
+                              <button class="dropdown-item text-warning" 
+                                      onclick="openDeactivateModal('{{ item.cls.id }}', '{{ item.cls.name }}', '{{ item.student_count }}')">
+                                <i class="fas fa-pause"></i> Deactivate
+                              </button>
+                              {% else %}
+                              <form method="POST" action="{{ url_for('admin.admin_class_reactivate', class_id=item.cls.id) }}">
+                                <button type="submit" class="dropdown-item text-success">
+                                  <i class="fas fa-play"></i> Reactivate
+                                </button>
+                              </form>
+                              {% endif %}
+                              <div class="divider" style="margin: 4px 0;"></div>
+                              <button class="dropdown-item text-danger" 
+                                      onclick="openDeleteModal('{{ item.cls.id }}', '{{ item.cls.name }}', '{{ item.student_count }}')">
+                                <i class="fas fa-trash"></i> Delete Class
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text3);">No classes found. Use the button above to create one.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<!-- Deactivate Confirmation Modal -->
+<div class="confirm-modal-overlay" id="deactivateModal">
+    <div class="confirm-modal">
+        <h3 style="margin-bottom: 8px;"><i class="fas fa-pause-circle" style="color:var(--yellow);"></i> Deactivate Class</h3>
+        <p class="text-muted text-sm" id="modal-class-name" style="margin-bottom: 12px;"></p>
+        
+        <div class="modal-reason">
+            <strong>Why deactivate instead of delete?</strong><br>
+            Deactivating a class hides it from active teacher dashboards and prevents new attendance sessions. 
+            <strong>No data is lost</strong> — student enrollment and records are fully preserved.
+            <br><br>
+            <strong>Students affected:</strong> <span id="modal-student-count"></span>
+        </div>
+
+        <form method="POST" id="deactivateForm">
+            <div class="form-group">
+                <label>Type class name to confirm: <strong id="modal-confirm-name"></strong></label>
+                <input type="text" name="confirm_name" placeholder="Type class name here..." required autocomplete="off">
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="btn btn-danger" style="flex:1;">Confirm Deactivate</button>
+                <button type="button" onclick="closeModal()" class="btn btn-ghost" style="flex:1;">Cancel</button>
+            </div>
+        </form>
+    </div>
 </div>
 
-<div class="table-card">
-  <table>
-    <thead>
-      <tr>
-        <th style="width: 180px">Class Name</th>
-        <th>Assigned Teachers & Subjects</th>
-        <th style="width: 120px">Status</th>
-        <th style="text-align: right; width: 340px">Administration</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for cls in classes %}
-      <tr class="class-row {{ 'inactive' if not cls.is_active }}">
-        <td>
-          <div style="font-weight: 700; color: var(--text); font-size: 1rem;">
-            <i class="fas fa-chalkboard" style="color: var(--primary); margin-right: 10px; opacity: 0.6;"></i>
-            {{ cls.name }}
-          </div>
-        </td>
-        <td class="assignment-cell">
-          {% if cls.class_teachers %}
-          <ul class="assignment-list">
-            {% for assoc in cls.class_teachers %}
-            <li class="assignment-chip">
-              <strong>{{ assoc.teacher.username }}</strong>
-              <span class="subject">{{ assoc.subject.name }}</span>
-            </li>
-            {% endfor %}
-          </ul>
-          {% else %}
-          <span style="color: var(--text3); font-style: italic; font-size: 0.85rem;">No assignments</span>
-          {% endif %}
-        </td>
-        <td>
-          <span class="status-tag {{ 'tag-active' if cls.is_active else 'tag-inactive' }}">
-            <i class="fas fa-{{ 'circle-check' if cls.is_active else 'circle-xmark' }}"></i>
-            {{ 'Active' if cls.is_active else 'Inactive' }}
-          </span>
-        </td>
-        <td style="text-align: right">
-          <div class="action-group">
-            <a href="{{ url_for('admin.admin_view_class_students', class_id=cls.id) }}" class="btn btn-ghost btn-sm">
-              <i class="fas fa-user-group"></i> Students
-            </a>
+<!-- Hard Delete Modal -->
+<div class="confirm-modal-overlay" id="deleteModal">
+    <div class="confirm-modal">
+        <h3 style="color:var(--red); margin-bottom:8px;"><i class="fas fa-trash"></i> Delete Class</h3>
+        <p class="text-muted text-sm" id="del-class-name" style="margin-bottom:12px;"></p>
 
-            {% if cls.is_active %}
-            <form action="{{ url_for('admin.admin_deactivate_class', class_id=cls.id) }}" method="POST" onsubmit="return confirm('Deactivate class? It will be hidden from menus but students and history remain.');">
-              <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--yellow)" title="Disable (Safe)">
-                <i class="fas fa-power-off"></i> Disable
-              </button>
-            </form>
-            {% else %}
-            <form action="{{ url_for('admin.admin_reactivate_class', class_id=cls.id) }}" method="POST">
-              <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--green)" title="Re-enable">
-                <i class="fas fa-play"></i> Enable
-              </button>
-            </form>
-            {% endif %}
+        <div class="modal-reason danger">
+            <strong>Attendance records are preserved.</strong><br>
+            Deleting a class unlinks all teachers. Students will be moved to "Unassigned".
+            <strong>Historical attendance records remain intact</strong> in the system's history.
+            <br><br>
+            <strong>Students currently enrolled: <span id="del-student-count"></span></strong>
+        </div>
 
-            <i class="fas fa-question-circle" style="color:var(--text3); font-size:0.85rem; cursor:help; align-self:center; margin: 0 4px" 
-               title="Disable: Keeps history, hides class.&#10;Delete: Permanent. Only allowed for classes without attendance."></i>
-
-            <form action="{{ url_for('admin.admin_delete_class', class_id=cls.id) }}" method="POST" onsubmit="return confirm('PERMANENTLY DELETE empty class? Students will become unassigned.');">
-              <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--red)" title="Permanent Delete">
-                <i class="fas fa-trash-can"></i>
-              </button>
-            </form>
-          </div>
-        </td>
-      </tr>
-      {% else %}
-      <tr>
-        <td colspan="4" style="text-align: center; padding: 60px; color: var(--text3);">
-          <i class="fas fa-school-circle-exclamation" style="font-size: 3rem; display: block; margin-bottom: 16px; opacity: 0.2;"></i>
-          No classes have been registered yet.
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        <form method="POST" id="deleteForm">
+            <div class="form-group">
+                <label>Type class name to confirm: <strong id="del-confirm-name"></strong></label>
+                <input type="text" name="confirm_name" placeholder="Type class name..." required autocomplete="off">
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="btn btn-danger" style="flex:1;">Confirm Delete</button>
+                <button type="button" onclick="closeModal()" class="btn btn-ghost" style="flex:1;">Cancel</button>
+            </div>
+        </form>
+    </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleCreateForm() {
+        const form = document.getElementById('create-class-form');
+        form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+        if(form.style.display === 'block') form.querySelector('input').focus();
+    }
+
+    function openDeactivateModal(id, name, students) {
+        document.getElementById('modal-class-name').innerText = name;
+        document.getElementById('modal-student-count').innerText = students;
+        document.getElementById('modal-confirm-name').innerText = name;
+        document.getElementById('deactivateForm').action = "/admin/classes/deactivate/" + id;
+        document.getElementById('deactivateModal').classList.add('active');
+    }
+
+    function openDeleteModal(id, name, students) {
+        document.getElementById('del-class-name').innerText = name;
+        document.getElementById('del-student-count').innerText = students;
+        document.getElementById('del-confirm-name').innerText = name;
+        document.getElementById('deleteForm').action = "/admin/class/" + id + "/delete";
+        document.getElementById('deleteModal').classList.add('active');
+    }
+</script>
 {% endblock %}

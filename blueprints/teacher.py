@@ -311,6 +311,18 @@ def recognize_frame():
 
     if marked_students:
         db.session.commit()
+
+    try:
+        from extensions import socketio
+        socketio.emit('phone_frame_update', {
+            'image': data['image'],
+            'class_teacher_id': class_teacher_id,
+            'session_number': session_number,
+            'present': marked_students
+        })
+    except Exception as e:
+        pass
+
     return jsonify({"present": marked_students})
 
 @teacher_bp.route('/teacher/video_feed/<int:class_teacher_id>/<int:session_number>')

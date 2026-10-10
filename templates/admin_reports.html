@@ -3,24 +3,28 @@
 {% block title %}System Reports — Smart Attendance{% endblock %}
 
 {% block nav_links %}
-<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link"><i class="fas fa-chart-line"></i> Dashboard</a>
-<a href="{{ url_for('admin.admin_manage_users') }}" class="nav-link"><i class="fas fa-users-cog"></i> Manage Users</a>
-<a href="{{ url_for('admin.admin_manage_classes') }}" class="nav-link"><i class="fas fa-school"></i> Manage Classes</a>
-<a href="{{ url_for('admin.admin_reports') }}" class="nav-link active"><i class="fas fa-file-invoice"></i> Reports</a>
+<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link {% if request.endpoint == 'admin.admin_dashboard' %}active{% endif %}"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="{{ url_for('admin.admin_manage_students') }}" class="nav-link {% if 'admin_manage_students' in request.endpoint %}active{% endif %}"><i class="fas fa-user-graduate"></i> Students</a>
+<a href="{{ url_for('admin.admin_teachers') }}" class="nav-link {% if 'admin_teachers' in request.endpoint %}active{% endif %}"><i class="fas fa-chalkboard-teacher"></i> Teachers</a>
+<a href="{{ url_for('admin.admin_manage_subjects') }}" class="nav-link {% if 'admin_subjects' in request.endpoint %}active{% endif %}"><i class="fas fa-book"></i> Subjects</a>
+<a href="{{ url_for('admin.admin_classes') }}" class="nav-link {% if 'admin_classes' in request.endpoint or 'admin_manage_classes' in request.endpoint or 'admin_view_class' in request.endpoint %}active{% endif %}"><i class="fas fa-school"></i> Manage Classes</a>
+<a href="{{ url_for('admin.admin_manage_users') }}" class="nav-link {% if 'admin_users' in request.endpoint %}active{% endif %}"><i class="fas fa-users-cog"></i> All Users</a>
+<a href="{{ url_for('admin.admin_reports') }}" class="nav-link {% if 'admin_reports' in request.endpoint %}active{% endif %}"><i class="fas fa-file-invoice"></i> Reports</a>
 {% endblock %}
 
-{% block page_title %}Student Analytics{% endblock %}
-{% block topbar_badge %}Reporting Engine{% endblock %}
 
 {% block sidebar_user %}
 <div class="user-card">
-  <div class="user-avatar" style="background: var(--bg3);">A</div>
+  <div class="user-avatar" style="background: linear-gradient(135deg, var(--red), var(--yellow));">{{ session.get('username', 'A')[0]|upper }}</div>
   <div class="user-info">
-    <div class="user-name">{{ session.get('username', 'Admin') }}</div>
-    <div class="user-role">Administrator</div>
+    <div class="user-name">{{ session.get('username', 'Principal') }}</div>
+    <div class="user-role">Principal</div>
   </div>
 </div>
 {% endblock %}
+
+
+{% block page_title %}Student Analytics{% endblock %}
 
 {% block extra_css %}
 .report-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }

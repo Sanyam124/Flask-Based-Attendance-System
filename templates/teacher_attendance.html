@@ -6,6 +6,7 @@
   <title>Live Session — {{ association.class_ref.name }} ({{ association.subject.name }})</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -159,20 +160,6 @@
       transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     .modern-toast.show { transform:translateX(0); opacity:1; }
-    
-    /* Dynamic Stacking Toasts */
-    .toast-container {
-      position:fixed; bottom:30px; right:30px; z-index:9999;
-      display:flex; flex-direction:column; gap:10px; align-items:flex-end;
-    }
-    .modern-toast {
-      background:rgba(16,185,129,0.95); color:white; padding:14px 22px;
-      border-radius:12px; box-shadow:0 8px 25px rgba(0,0,0,0.3);
-      display:flex; align-items:center; gap:12px; font-weight:600; font-size:0.95rem;
-      transform:translateX(120%); opacity:0;
-      transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .modern-toast.show { transform:translateX(0); opacity:1; }
 
     .att-panel{
       background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
@@ -291,7 +278,11 @@
       <i class="fas fa-mobile-alt"></i>
     </div>
     <h2>Open This on Your Phone</h2>
-    <p>Make sure your phone is on the <strong>same WiFi network</strong> as this computer. Then open this URL in your phone's browser:</p>
+    <p>Scan the QR code or open the link below in your phone's browser:</p>
+
+    <div style="text-align:center;margin:10px 0;">
+      <img id="phone-qr" src="" style="width:160px;height:160px;border-radius:14px;display:none;margin:0 auto;background:#fff;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,0.3);" alt="Scan QR Code" />
+    </div>
 
     <div class="url-display" id="phone-url" onclick="copyURL()"></div>
     <div class="url-hint">📱 Tap the URL above to copy it</div>
@@ -337,6 +328,14 @@
       </div>
       <div class="vp-body">
         <video id="localVideo" autoplay playsinline muted></video>
+        <img id="phoneVideoImg" style="display:none;width:100%;height:100%;object-fit:contain;border-radius:12px;" alt="Phone camera feed" />
+        <div id="phoneWaitingNotice" style="display:none;text-align:center;color:var(--text2);padding:24px;">
+          <div style="width:72px;height:72px;background:rgba(34,211,238,0.12);border-radius:24px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:2rem;color:var(--accent);animation:pulse 1.8s infinite;">
+            <i class="fas fa-mobile-alt"></i>
+          </div>
+          <h3 style="font-size:1.15rem;color:var(--text);margin-bottom:8px;">Connected to Phone Camera</h3>
+          <p style="font-size:0.85rem;color:var(--text3);max-width:320px;line-height:1.5;">Keep the camera open on your phone. Captured frames will appear here in real-time as your phone scans students.</p>
+        </div>
         <canvas id="captureCanvas" style="display:none;"></canvas>
         <div class="video-toast" id="video-toast"></div>
       </div>
@@ -442,12 +441,26 @@
         }
         const phoneURL = `${base}/teacher/phone_camera/{{ association.id }}/${sessionNumber}`;
         document.getElementById('phone-url').textContent = phoneURL;
+        
+        const qrEl = document.getElementById('phone-qr');
+        if (qrEl) {
+          qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(phoneURL)}`;
+          qrEl.style.display = 'block';
+        }
+
         showScreen('phone-url-screen');
       })
       .catch(() => {
         // Fallback to local network if fetch fails
         const phoneURL = `http://${location.hostname}:${location.port}/teacher/phone_camera/{{ association.id }}/${sessionNumber}`;
         document.getElementById('phone-url').textContent = phoneURL;
+
+        const qrEl = document.getElementById('phone-qr');
+        if (qrEl) {
+          qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(phoneURL)}`;
+          qrEl.style.display = 'block';
+        }
+
         showScreen('phone-url-screen');
       });
   }
@@ -457,11 +470,37 @@
     document.getElementById('mode-label').textContent = 'Phone Camera';
     document.getElementById('vp-label').textContent = 'Phone Camera — Receiving frames from phone';
     document.getElementById('localVideo').style.display = 'none';
+
+    const phoneImg = document.getElementById('phoneVideoImg');
+    if (phoneImg) phoneImg.style.display = 'none';
+
+    const waitingNotice = document.getElementById('phoneWaitingNotice');
+    if (waitingNotice) waitingNotice.style.display = 'block';
+
     showScreen('session-layout');
 
     // In phone mode, we just poll attendance_status — the phone sends frames
     startStatusPolling();
   }
+
+  // Real-time phone frame socket listener
+  const socket = io();
+  socket.on('phone_frame_update', function(data) {
+    if (cameraMode === 'phone' && data.class_teacher_id == {{ association.id }}) {
+      const phoneImg = document.getElementById('phoneVideoImg');
+      const waitingNotice = document.getElementById('phoneWaitingNotice');
+      if (phoneImg) {
+        phoneImg.src = data.image;
+        phoneImg.style.display = 'block';
+      }
+      if (waitingNotice) {
+        waitingNotice.style.display = 'none';
+      }
+      if (data.present && data.present.length > 0) {
+        addPresent(data.present);
+      }
+    }
+  });
 
   function copyURL() {
     const url = document.getElementById('phone-url').textContent;
@@ -481,16 +520,21 @@
     recognitionInterval = setInterval(() => {
       if (video.paused || video.ended || !video.srcObject) return;
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      const maxW = 500;
+      const vW = video.videoWidth || 640;
+      const vH = video.videoHeight || 480;
+      const scale = Math.min(1, maxW / vW);
+      canvas.width = Math.round(vW * scale);
+      canvas.height = Math.round(vH * scale);
+
       // Un-mirror the capture (video is CSS mirrored for visual feedback)
       ctx.save();
       ctx.translate(canvas.width, 0);
       ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       ctx.restore();
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.7);
+      const imgData = canvas.toDataURL('image/jpeg', 0.60);
 
       fetch('/teacher/recognize_frame', {
         method: 'POST',
@@ -500,7 +544,7 @@
       .then(r => r.json())
       .then(data => { if (data.present?.length) addPresent(data.present); })
       .catch(() => {});
-    }, 4000);
+    }, 800);
   }
 
   // ===== STATUS POLLING (Both modes — backup for phone mode) =====
@@ -596,7 +640,7 @@
   }
 
   // ===== SESSION TIMER =====
-  let secondsLeft = 15 * 60;
+  let secondsLeft = {{ session_timeout }} * 60;
   const timerEl = document.getElementById('timer-badge');
   function fmt(s) { const m=Math.floor(s/60),sec=s%60; return `⏱ ${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')} remaining`; }
   // Timer only starts after session screen is shown

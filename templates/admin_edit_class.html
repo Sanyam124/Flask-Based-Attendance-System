@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block page_title %}Edit Class Roster{% endblock %}
+{% block topbar_badge %}Principal Panel{% endblock %}
+
+{% block nav_links %}
+<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link {% if request.endpoint == 'admin.admin_dashboard' %}active{% endif %}"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="{{ url_for('admin.admin_manage_students') }}" class="nav-link {% if 'admin_manage_students' in request.endpoint %}active{% endif %}"><i class="fas fa-user-graduate"></i> Students</a>
+<a href="{{ url_for('admin.admin_teachers') }}" class="nav-link {% if 'admin_teachers' in request.endpoint %}active{% endif %}"><i class="fas fa-chalkboard-teacher"></i> Teachers</a>
+<a href="{{ url_for('admin.admin_manage_subjects') }}" class="nav-link {% if 'admin_subjects' in request.endpoint %}active{% endif %}"><i class="fas fa-book"></i> Subjects</a>
+<a href="{{ url_for('admin.admin_classes') }}" class="nav-link active"><i class="fas fa-school"></i> Manage Classes</a>
+<a href="{{ url_for('admin.admin_manage_users') }}" class="nav-link {% if 'admin_users' in request.endpoint %}active{% endif %}"><i class="fas fa-users-cog"></i> All Users</a>
+<a href="{{ url_for('admin.admin_reports') }}" class="nav-link {% if 'admin_reports' in request.endpoint %}active{% endif %}"><i class="fas fa-file-invoice"></i> Reports</a>
+{% endblock %}
+
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar" style="background: linear-gradient(135deg, var(--red), var(--yellow));">{{ session.get('username', 'A')[0]|upper }}</div>
+  <div class="user-info">
+    <div class="user-name">{{ session.get('username', 'Principal') }}</div>
+    <div class="user-role">Principal</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container" style="max-width: 1200px; margin: 0 auto;">
+    <div class="header-section" style="margin-bottom: 30px;">
+        <div style="margin-bottom: 15px;">
+            <a href="{{ url_for('admin.admin_classes') }}" style="text-decoration:none; color:var(--text3); font-size:0.9rem;">
+                <i class="fas fa-arrow-left"></i> Back to Class Management
+            </a>
+        </div>
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <h1 class="page-title" style="font-size:1.8rem; margin-bottom:5px;">Roster Details: {{ cls.name }}</h1>
+                <p class="page-subtitle" style="color:var(--text2);">Assign students and faculty to this section.</p>
+            </div>
+            <form action="{{ url_for('admin.admin_edit_class', class_id=cls.id) }}" method="POST" style="display: flex; gap: 8px; align-items: center; background: var(--bg2); padding: 10px 15px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <label for="class_name" style="font-size: 0.8rem; color: var(--text3); font-weight: 600;">Rename Class:</label>
+                <input type="text" name="class_name" id="class_name" value="{{ cls.name }}" required 
+                       style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg); color: var(--text); font-size: 0.9rem;">
+                <button type="submit" class="btn btn-sm btn-primary">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="roster-grid">
+        <!-- Students Section -->
+        <div class="management-card card-half">
+            <div class="card-header">
+                <div class="header-left">
+                    <i class="fas fa-user-graduate"></i>
+                    <h2>Students ({{ students|length }})</h2>
+                </div>
+                <div class="header-right">
+                    <a href="{{ url_for('admin.admin_view_class_students', class_id=cls.id) }}" class="btn btn-sm btn-ghost" style="font-size: 0.75rem;">
+                        <i class="fas fa-eye"></i> View Final Roster
+                    </a>
+                </div>
+            </div>
+            
+            <div class="add-member-bar">
+                <form action="{{ url_for('admin.admin_class_add_student', class_id=cls.id) }}" method="POST">
+                    <select name="student_id" required class="form-select-sm">
+                        <option value="">Select student to add...</option>
+                        {% for s in available_students %}
+                        <option value="{{ s.id }}">{{ s.username }} ({{ s.enrollment_number }})</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </form>
+            </div>
+
+            <div class="table-container mini-table">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Enrollment</th>
+                            <th class="text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        <tr>
+                            <td>{{ s.username }}</td>
+                            <td><span class="badge badge-outline">{{ s.enrollment_number }}</span></td>
+                            <td class="text-right">
+                                <form action="{{ url_for('admin.admin_class_remove_student', class_id=cls.id, student_id=s.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn-icon btn-danger btn-xs" title="Remove from class">
+                                        <i class="fas fa-user-minus"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center py-4">No students in this class.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Teachers Section -->
+        <div class="management-card card-half">
+            <div class="card-header">
+                <div class="header-left">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <h2>Teachers & Subjects</h2>
+                </div>
+            </div>
+
+            <div class="add-member-bar">
+                <form action="{{ url_for('admin.admin_class_assign_teacher', class_id=cls.id) }}" method="POST" class="teacher-assign-form">
+                    <select name="teacher_id" required>
+                        <option value="">Teacher...</option>
+                        {% for t in available_teachers %}
+                        <option value="{{ t.id }}">{{ t.username }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="subject_id" required>
+                        <option value="">Subject...</option>
+                        {% for sub in available_subjects %}
+                        <option value="{{ sub.id }}">{{ sub.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Assign
+                    </button>
+                </form>
+            </div>
+
+            <div class="table-container mini-table">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Teacher</th>
+                            <th>Subject</th>
+                            <th class="text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assoc in teacher_assignments %}
+                        <tr>
+                            <td>{{ assoc.teacher.username }}</td>
+                            <td><span class="badge badge-info">{{ assoc.subject.name }}</span></td>
+                            <td class="text-right">
+                                <form action="{{ url_for('admin.admin_class_unassign_teacher', class_id=cls.id, assignment_id=assoc.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn-icon btn-danger btn-xs" title="Remove assignment">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center py-4">No teachers assigned to this class.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .roster-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-top: 20px;
+    }
+    .add-member-bar {
+        padding: 15px;
+        background: rgba(var(--primary-rgb), 0.03);
+        border-bottom: 1px solid var(--border-color);
+    }
+    .add-member-bar form {
+        display: flex;
+        gap: 10px;
+    }
+    .add-member-bar select {
+        flex: 1;
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: var(--card-bg);
+        color: var(--text-color);
+    }
+    .mini-table {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 500;
+        margin-bottom: 15px;
+        transition: color 0.2s;
+    }
+    .btn-back:hover {
+        color: var(--primary-color);
+    }
+    .teacher-assign-form select {
+        min-width: 120px;
+    }
+    @media (max-width: 1024px) {
+        .roster-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

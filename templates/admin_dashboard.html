@@ -1,23 +1,27 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Dashboard — Smart Attendance{% endblock %}
+{% block title %}Principal Dashboard — Smart Attendance{% endblock %}
 
 {% block nav_links %}
-<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link active"><i class="fas fa-chart-line"></i> Dashboard</a>
-<a href="{{ url_for('admin.admin_manage_users') }}" class="nav-link"><i class="fas fa-users-cog"></i> Manage Users</a>
-<a href="{{ url_for('admin.admin_manage_classes') }}" class="nav-link"><i class="fas fa-school"></i> Manage Classes</a>
-<a href="{{ url_for('admin.admin_reports') }}" class="nav-link"><i class="fas fa-file-invoice"></i> Reports</a>
+<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link {% if request.endpoint == 'admin.admin_dashboard' %}active{% endif %}"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="{{ url_for('admin.admin_manage_students') }}" class="nav-link {% if 'admin_manage_students' in request.endpoint %}active{% endif %}"><i class="fas fa-user-graduate"></i> Students</a>
+<a href="{{ url_for('admin.admin_teachers') }}" class="nav-link {% if 'admin_teachers' in request.endpoint %}active{% endif %}"><i class="fas fa-chalkboard-teacher"></i> Teachers</a>
+<a href="{{ url_for('admin.admin_manage_subjects') }}" class="nav-link {% if 'admin_subjects' in request.endpoint %}active{% endif %}"><i class="fas fa-book"></i> Subjects</a>
+<a href="{{ url_for('admin.admin_classes') }}" class="nav-link {% if 'admin_classes' in request.endpoint or 'admin_manage_classes' in request.endpoint or 'admin_view_class' in request.endpoint %}active{% endif %}"><i class="fas fa-school"></i> Manage Classes</a>
+<a href="{{ url_for('admin.admin_manage_users') }}" class="nav-link {% if 'admin_users' in request.endpoint %}active{% endif %}"><i class="fas fa-users-cog"></i> All Users</a>
+<a href="{{ url_for('admin.admin_reports') }}" class="nav-link {% if 'admin_reports' in request.endpoint %}active{% endif %}"><i class="fas fa-file-invoice"></i> Reports</a>
 {% endblock %}
 
-{% block page_title %}Admin Overview{% endblock %}
-{% block topbar_badge %}<i class="fas fa-shield-alt" style="color:var(--accent);margin-right:6px"></i> System Admin{% endblock %}
+
+{% block page_title %}Principal Overview{% endblock %}
+{% block topbar_badge %}<i class="fas fa-shield-alt" style="color:var(--accent);margin-right:6px"></i> Principal Panel{% endblock %}
 
 {% block sidebar_user %}
 <div class="user-card">
-  <div class="user-avatar" style="background: linear-gradient(135deg, var(--red), var(--yellow));">A</div>
+  <div class="user-avatar" style="background: linear-gradient(135deg, var(--red), var(--yellow));">{{ admin.username[0].upper() }}</div>
   <div class="user-info">
     <div class="user-name">{{ admin.username }}</div>
-    <div class="user-role">Administrator</div>
+    <div class="user-role">Principal</div>
   </div>
 </div>
 {% endblock %}
@@ -72,15 +76,11 @@
   background: radial-gradient(circle at top right, rgba(99,102,241,0.1), transparent);
   pointer-events: none;
 }
-.ac-icon {
-  width: 48px; height: 48px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.2rem;
-}
+.ac-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
 .ac-icon.blue { background: rgba(99,102,241,0.15); color: var(--primary); }
 .ac-icon.cyan { background: rgba(34,211,238,0.15); color: var(--accent); }
 .ac-icon.purple { background: rgba(168,85,247,0.15); color: #a855f7; }
-
+.ac-icon.green { background: rgba(16,185,129,0.15); color: var(--green); }
 .ac-content h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
 .ac-content p { font-size: 0.85rem; color: var(--text3); line-height: 1.5; }
 .ac-arrow { margin-left: auto; color: var(--text3); transition: transform 0.2s; }
@@ -91,39 +91,27 @@
 <div class="admin-hero">
   <div class="hero-icon"><i class="fas fa-crown"></i></div>
   <div class="hero-text">
-    <h2>System Administrator Control Panel</h2>
-    <p>Monitor system health, manage user accounts, and view global attendance analytics.</p>
+    <h2>Welcome back, {{ admin.username }}</h2>
+    <p>Manage your school's users, classes, teachers and attendance reports from here.</p>
   </div>
 </div>
 
 <div class="stats-grid">
   <div class="stat-card">
     <div class="stat-icon" style="background: rgba(99,102,241,0.15); color: var(--primary);"><i class="fas fa-user-graduate"></i></div>
-    <div class="stat-details">
-      <h3>Total Students</h3>
-      <div class="stat-value">{{ total_students }}</div>
-    </div>
+    <div class="stat-details"><h3>Students</h3><div class="stat-value">{{ total_students }}</div></div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background: rgba(168,85,247,0.15); color: #a855f7;"><i class="fas fa-chalkboard-teacher"></i></div>
-    <div class="stat-details">
-      <h3>Total Teachers</h3>
-      <div class="stat-value">{{ total_teachers }}</div>
-    </div>
+    <div class="stat-details"><h3>Teachers</h3><div class="stat-value">{{ total_teachers }}</div></div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background: rgba(34,211,238,0.15); color: var(--accent);"><i class="fas fa-school"></i></div>
-    <div class="stat-details">
-      <h3>Total Classes</h3>
-      <div class="stat-value">{{ total_classes }}</div>
-    </div>
+    <div class="stat-details"><h3>Classes</h3><div class="stat-value">{{ total_classes }}</div></div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background: rgba(16,185,129,0.15); color: var(--green);"><i class="fas fa-calendar-check"></i></div>
-    <div class="stat-details">
-      <h3>Today's Records</h3>
-      <div class="stat-value">{{ today_attendance_count }}</div>
-    </div>
+    <div class="stat-details"><h3>Today's Records</h3><div class="stat-value">{{ today_attendance_count }}</div></div>
   </div>
 </div>
 
@@ -136,19 +124,30 @@
       <i class="fas fa-chevron-right ac-arrow"></i>
     </div>
     <div class="ac-content">
-      <h3>User Management</h3>
-      <p>Provision new accounts, reset passwords, or deactivate users across all roles (Students, Teachers, Admins).</p>
+      <h3>Manage Users</h3>
+      <p>Add students & teachers, reset passwords, deactivate accounts.</p>
     </div>
   </a>
 
-  <a href="{{ url_for('admin.admin_manage_classes') }}" class="action-card">
+  <a href="{{ url_for('admin.admin_classes') }}" class="action-card">
     <div style="display:flex; align-items:center; width:100%">
       <div class="ac-icon cyan"><i class="fas fa-layer-group"></i></div>
       <i class="fas fa-chevron-right ac-arrow"></i>
     </div>
     <div class="ac-content">
-      <h3>Class & Subject Registry</h3>
-      <p>Configure academic classes, assign teachers to subjects, and manage student enrollments in real-time.</p>
+      <h3>Manage Classes</h3>
+      <p>Create, deactivate or delete classes. View enrolled students per class.</p>
+    </div>
+  </a>
+
+  <a href="{{ url_for('admin.admin_teachers') }}" class="action-card">
+    <div style="display:flex; align-items:center; width:100%">
+      <div class="ac-icon green"><i class="fas fa-chalkboard-teacher"></i></div>
+      <i class="fas fa-chevron-right ac-arrow"></i>
+    </div>
+    <div class="ac-content">
+      <h3>Manage Teachers</h3>
+      <p>View teacher class assignments and remove departed teachers.</p>
     </div>
   </a>
 
@@ -158,35 +157,9 @@
       <i class="fas fa-chevron-right ac-arrow"></i>
     </div>
     <div class="ac-content">
-      <h3>Global Analytics</h3>
-      <p>Generate institutional reports, export data to CSV, and analyze trends in student attendance and engagement.</p>
+      <h3>Reports & Export</h3>
+      <p>Generate attendance reports and export data to CSV.</p>
     </div>
   </a>
-</div>
-
-<!-- System Logic Guide -->
-<div class="table-card" style="margin-top: 40px; padding: 24px; background: linear-gradient(to right, var(--card), rgba(99,102,241,0.05));">
-  <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-    <i class="fas fa-circle-info" style="color:var(--primary); font-size:1.2rem"></i>
-    <h3 style="font-size:1rem; font-weight:700; color:var(--text)">System Logic & Data Integrity</h3>
-  </div>
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:32px;">
-    <div>
-      <h4 style="font-size:0.85rem; color:var(--text); margin-bottom:8px">Logical Hierarchy</h4>
-      <ul style="font-size:0.85rem; color:var(--text3); line-height:1.6; padding-left:20px">
-        <li><strong>Classes</strong>: The master container for students.</li>
-        <li><strong>Subjects</strong>: Academic units taught within classes.</li>
-        <li><strong>Teachers</strong>: Assigned to a <em>Class + Subject</em> pairing.</li>
-        <li><strong>Attendance</strong>: Tied to the specific <em>Class/Subject/Session</em> session.</li>
-      </ul>
-    </div>
-    <div>
-      <h4 style="font-size:0.85rem; color:var(--text); margin-bottom:8px">Deactivation vs. Deletion</h4>
-      <ul style="font-size:0.85rem; color:var(--text3); line-height:1.6; padding-left:20px">
-        <li><span style="color:var(--yellow)">Deactivate</span>: Keeps all attendance history. User/Class is hidden but data is safe. <em>(Recommended for past sessions)</em></li>
-        <li><span style="color:var(--red)">Delete</span>: Permanent removal. Only possible if no attendance history exists. <em>(Use only for mistakes)</em></li>
-      </ul>
-    </div>
-  </div>
 </div>
 {% endblock %}

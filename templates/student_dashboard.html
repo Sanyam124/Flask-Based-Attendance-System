@@ -20,7 +20,6 @@
 {% block nav_links %}
 <span class="nav-section-title">Student</span>
 <a href="{{ url_for('student.student_dashboard') }}" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a>
-<a href="{{ url_for('student.capture_samples') }}" class="nav-link"><i class="fas fa-camera"></i> Face Registration</a>
 <a href="{{ url_for('student.view_profile', user_id=student.id) }}" class="nav-link"><i class="fas fa-user"></i> My Profile</a>
 {% endblock %}
 
@@ -120,16 +119,11 @@
       {% endif %}
     </div>
     {% if has_samples %}
-      <p style="color:var(--text2);font-size:0.85rem">Your face is registered. To reset, contact your administrator.</p>
-      <a href="mailto:admin@school.edu?subject=Face Reset Request&body=Hi Admin,%0D%0APlease reset my face data.%0D%0AUsername: {{ student.username }}%0D%0AEnroll: {{ student.enrollment_number }}" class="btn btn-ghost btn-sm" style="margin-top:12px"><i class="fas fa-envelope"></i> Contact Admin</a>
+      <p style="color:var(--text2);font-size:0.85rem">Your face provides biometric access via AI embeddings. To reset or update your photo, contact your administrator.</p>
+      <a href="mailto:admin@school.edu?subject=Face Reset Request&body=Hi Admin,%0D%0APlease reset my face data for: {{ student.username }} / {{ student.enrollment_number }}" class="btn btn-ghost btn-sm" style="margin-top:12px"><i class="fas fa-envelope"></i> Request Photo Update</a>
     {% else %}
-      {% if has_active_token %}
-        <p style="color:var(--text2);font-size:0.85rem">Your admin has authorized you to register your face. This link will expire soon.</p>
-        <a href="{{ url_for('student.capture_samples') }}" class="btn btn-primary btn-sm" style="margin-top:12px"><i class="fas fa-camera"></i> Register Face now</a>
-      {% else %}
-        <p style="color:var(--text2);font-size:0.85rem">Your admin needs to issue a registration token before you can register your face.</p>
-        <button class="btn btn-ghost btn-sm" style="margin-top:12px; cursor:not-allowed" disabled><i class="fas fa-lock"></i> Registration Locked</button>
-      {% endif %}
+      <p style="color:var(--text2);font-size:0.85rem">Your admin needs to upload a clear face photo of you to activate biometric attendance.</p>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px; cursor:not-allowed" disabled><i class="fas fa-lock"></i> Pending Admin Upload</button>
     {% endif %}
   </div>
 </div>

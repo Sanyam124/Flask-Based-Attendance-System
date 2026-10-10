@@ -173,11 +173,20 @@ class FaceRecognitionSystem:
             search_names = [self.known_names[i] for i in indices]
 
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        locations = face_recognition.face_locations(rgb, model="hog")
+        
+        # Downscale for ultra-fast face detection & encoding on CPU
+        h, w = rgb.shape[:2]
+        if w > 500:
+            scale = 500.0 / w
+            proc_rgb = cv2.resize(rgb, (0, 0), fx=scale, fy=scale)
+        else:
+            proc_rgb = rgb
+
+        locations = face_recognition.face_locations(proc_rgb, model="hog")
         if not locations:
             return []
 
-        live_encs = face_recognition.face_encodings(rgb, locations, num_jitters=1)
+        live_encs = face_recognition.face_encodings(proc_rgb, locations, num_jitters=1)
         recognized = set()
         known_arr  = np.array(search_encodings)
 
@@ -250,28 +259,6 @@ def stream_attendance_feed(frs, path_prefix: str, student_paths: set):
                                 folder_name = os.path.basename(best_id)
                                 display_name = folder_name.split('_', 1)[1] if '_' in folder_name else folder_name
                                 label, color = display_name, (0, 220, 80) if best_id in student_paths else (60, 180, 255)
-
-                    cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
-                    cv2.rectangle(frame, (left, bottom - 26), (right, bottom), color, cv2.FILLED)
-                    cv2.putText(frame, label, (left + 6, bottom - 6),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-
-            _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 75])
-            yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + buf.tobytes() + b"\r\n")
-    finally:
-        camera.release()
-走,StartLine:1,TargetContent:
-                                margin = distances[sorted_idx[1]] - best_dist
-                                if margin < FACE_RECOGNITION_MARGIN:
-                                    is_ambiguous = True
-
-                            if not is_ambiguous:
-                                # Extract username for display
-                                folder_name = os.path.basename(best_id)
-                                display_name = folder_name.split('_', 1)[1] if '_' in folder_name else folder_name
-                                
-                                label = display_name
-                                color = (0, 220, 80) if best_id in student_paths else (60, 180, 255)
 
                     cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
                     cv2.rectangle(frame, (left, bottom - 26), (right, bottom), color, cv2.FILLED)

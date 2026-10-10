@@ -1,8 +1,15 @@
 import os
+import sys
 import webbrowser
 import threading
 import subprocess
 import re
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 from flask import Flask, render_template, redirect, url_for, session
 from flask_socketio import emit
 from dotenv import load_dotenv
@@ -35,9 +42,9 @@ def start_public_tunnel():
             if match:
                 PUBLIC_URL = match.group(1)
                 print("\n" + "="*55)
-                print(" 🚀 PUBLIC INTERNET TUNNEL READY! 🚀")
+                print(" [*] PUBLIC INTERNET TUNNEL READY!")
                 print(" Your Phone Camera Link will use this URL automatically!")
-                print(f" 👉 {PUBLIC_URL}")
+                print(f" -> {PUBLIC_URL}")
                 print("="*55 + "\n")
     except Exception as e:
         pass
@@ -139,6 +146,23 @@ def create_app():
         migrate_database(app)
         db.create_all()
 
+        # Ensure a superadmin exists for demo deployments
+        try:
+            from models import User
+            from werkzeug.security import generate_password_hash
+            if not User.query.filter_by(role='admin').first():
+                superadmin = User(
+                    username="System Admin",
+                    email="superadmin@system.com",
+                    password=generate_password_hash("admin123"),
+                    role="admin",
+                    is_active=True
+                )
+                db.session.add(superadmin)
+                db.session.commit()
+        except Exception:
+            pass
+
     # Register Blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
@@ -184,23 +208,27 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    PORT = 5000
+    PORT = int(os.environ.get("PORT", 5000))
     URL = f"http://localhost:{PORT}"
+    is_cloud = os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL") or os.environ.get("SPACE_ID")
 
-    # Auto-open browser
-    threading.Timer(1.5, lambda: webbrowser.open(URL)).start()
+    if not is_cloud:
+        try:
+            threading.Timer(1.5, lambda: webbrowser.open(URL)).start()
+        except Exception:
+            pass
+        threading.Thread(target=start_public_tunnel, daemon=True).start()
 
     print(f"\n{'='*45}")
-    print(f"  ✅ Smart Attendance System is running!")
-    print(f"  👉 Open your browser at: {URL}")
+    print(f"  [*] Smart Attendance System is running!")
+    print(f"  -> Open your browser at: {URL}")
     print(f"{'='*45}\n")
-
-    threading.Thread(target=start_public_tunnel, daemon=True).start()
 
     socketio.run(
         app, 
-        debug=True, 
+        debug=False if is_cloud else True, 
         host='0.0.0.0', 
         port=PORT,
-        use_reloader=True
+        use_reloader=False if is_cloud else True,
+        allow_unsafe_werkzeug=True
     )

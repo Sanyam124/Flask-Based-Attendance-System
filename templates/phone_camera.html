@@ -196,10 +196,12 @@
   const statusIndicator = document.getElementById('statusIndicator');
   const progressBar = document.getElementById('progress-bar');
 
+  let isScanning = false;
+
   function animateProgress() {
     progressBar.style.transition = 'none';
     progressBar.style.width = '0%';
-    setTimeout(() => { progressBar.style.transition = 'width 3.8s linear'; progressBar.style.width = '100%'; }, 50);
+    setTimeout(() => { progressBar.style.transition = 'width 0.5s ease-out'; progressBar.style.width = '100%'; }, 20);
   }
 
   navigator.mediaDevices.getUserMedia({
@@ -215,45 +217,51 @@
     statusIndicator.className = 'status-indicator status-error';
   });
 
-  function startScanLoop() {
-    setInterval(() => {
-      if (video.paused || video.ended || !video.srcObject) return;
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      ctx.drawImage(video, 0, 0);
-      animateProgress();
-      const imgData = canvas.toDataURL('image/jpeg', 0.75);
+  async function startScanLoop() {
+    if (isScanning || video.paused || video.ended || !video.srcObject) {
+      setTimeout(startScanLoop, 300);
+      return;
+    }
+    isScanning = true;
 
-      fetch('/teacher/recognize_frame', {
+    try {
+      const maxW = 500;
+      const vW = video.videoWidth || 640;
+      const vH = video.videoHeight || 480;
+      const scale = Math.min(1, maxW / vW);
+      canvas.width = Math.round(vW * scale);
+      canvas.height = Math.round(vH * scale);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      animateProgress();
+      const imgData = canvas.toDataURL('image/jpeg', 0.60);
+
+      const r = await fetch('/teacher/recognize_frame', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: imgData, assoc_id: assocId, session_number: sessionNumber })
-      })
-      .then(r => r.json())
-      .then(data => {
-        if (data.present && data.present.length > 0) {
-          data.present.forEach(rec => {
-            if (markedSet.has(rec.username)) return;
-            markedSet.add(rec.username);
-            recognizedCount++;
-            document.getElementById('scan-count').textContent = recognizedCount;
-            playBeep();
-            spawnPhoneToast(`${rec.username} marked present!`);
-            addRecognizedRow(rec);
-          });
-        }
-        statusText.textContent = 'Scanning for faces...';
-        statusIndicator.className = 'status-indicator status-scanning';
-      })
-      .catch(() => {
-        statusText.textContent = 'Connection issue — retrying...';
-        statusIndicator.className = 'status-indicator status-error';
-        setTimeout(() => {
-          statusIndicator.className = 'status-indicator status-scanning';
-          statusText.textContent = 'Scanning for faces...';
-        }, 2000);
       });
-    }, 4000);
+
+      const data = await r.json();
+      if (data.present && data.present.length > 0) {
+        data.present.forEach(rec => {
+          if (markedSet.has(rec.username)) return;
+          markedSet.add(rec.username);
+          recognizedCount++;
+          document.getElementById('scan-count').textContent = recognizedCount;
+          playBeep();
+          spawnPhoneToast(`${rec.username} marked present!`);
+          addRecognizedRow(rec);
+        });
+      }
+      statusText.textContent = 'Scanning for faces...';
+      statusIndicator.className = 'status-indicator status-scanning';
+    } catch (err) {
+      statusText.textContent = 'Connection issue — retrying...';
+      statusIndicator.className = 'status-indicator status-error';
+    } finally {
+      isScanning = false;
+      setTimeout(startScanLoop, 500);
+    }
   }
 </script>
 </body>

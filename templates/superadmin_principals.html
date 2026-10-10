@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block page_title %}Manage Principals{% endblock %}
+{% block topbar_badge %}Super Admin Panel{% endblock %}
+
+{% block nav_links %}
+<a href="{{ url_for('system.superadmin_dashboard') }}" class="nav-link {% if request.endpoint == 'system.superadmin_dashboard' %}active{% endif %}"><i class="fas fa-chart-line"></i> Dashboard</a>
+<a href="{{ url_for('system.superadmin_organizations') }}" class="nav-link {% if 'organization' in request.endpoint %}active{% endif %}"><i class="fas fa-building"></i> Organizations</a>
+<a href="{{ url_for('system.superadmin_principals') }}" class="nav-link {% if 'principal' in request.endpoint %}active{% endif %}"><i class="fas fa-user-tie"></i> Principals</a>
+{% endblock %}
+
+{% block sidebar_user %}
+<div class="user-card">
+  <div class="user-avatar" style="background: linear-gradient(135deg, var(--green), #059669);">SA</div>
+  <div class="user-info">
+    <div class="user-name">System Admin</div>
+    <div class="user-role">Super Administrator</div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block extra_css %}
+<style>
+.confirm-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.65); z-index: 999;
+    align-items: center; justify-content: center;
+}
+.confirm-modal-overlay.active { display: flex; }
+.confirm-modal {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 32px; max-width: 500px; width: 90%;
+    animation: slideIn 0.2s ease;
+}
+@keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal-reason {
+    background: rgba(245,158,11,0.08); border-left: 3px solid var(--yellow); border-radius: 6px;
+    padding: 12px 16px; margin: 14px 0; font-size: 0.85rem; color: var(--text2); line-height: 1.7;
+}
+.modal-reason strong { color: var(--yellow); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 24px;">
+    <h3 class="card-title"><i class="fas fa-user-plus"></i> Appoint New Principal</h3>
+    <form method="POST" class="grid-2 mt-6">
+        <div class="form-group">
+            <label>Principal Name</label>
+            <input type="text" name="username" placeholder="e.g. Director John" required>
+        </div>
+        <div class="form-group">
+            <label>Login Email</label>
+            <input type="email" name="email" placeholder="john@parul.edu" required>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Minimum 8 characters" required minlength="8">
+        </div>
+        <div class="form-group">
+            <label>Assign to Organization</label>
+            <select name="organization_id" required>
+                <option value="" disabled selected>-- Select School/Org --</option>
+                {% for org in organizations %}
+                <option value="{{ org.id }}">{{ org.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1; margin-top: 10px;">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-user-tie"></i> Create Principal & Grant Access</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 class="card-title">Registered Principals</h3>
+    <div class="table-container mt-6">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>School / Organization</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for principal in principals %}
+                <tr>
+                    <td class="font-bold">{{ principal.username }}</td>
+                    <td>{{ principal.email }}</td>
+                    <td style="color: var(--primary); font-weight: 600;">
+                        {{ principal.organization.name if principal.organization else 'Unassigned' }}
+                    </td>
+                    <td>
+                        {% if principal.is_active %}
+                        <span style="color: var(--green); font-size: 0.85rem;"><i class="fas fa-check-circle"></i> Active</span>
+                        {% else %}
+                        <span style="color: var(--red); font-size: 0.85rem;"><i class="fas fa-times-circle"></i> Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <a href="{{ url_for('system.email_principal', principal_id=principal.id) }}"
+                           class="btn btn-sm" style="background: rgba(34,211,238,0.15); color: var(--accent); border: 1px solid rgba(34,211,238,0.3);"
+                           title="Open mail client with login info">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                        <a href="{{ url_for('system.edit_principal', principal_id=principal.id) }}"
+                           class="btn btn-sm" style="background: rgba(99,102,241,0.15); color: var(--primary); border: 1px solid rgba(99,102,241,0.3);"
+                           title="Edit principal details">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button class="btn btn-sm" style="background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3);"
+                            onclick="openRemoveModal('{{ principal.id }}', '{{ principal.username }}', '{{ principal.organization.name if principal.organization else 'None' }}')"
+                            title="Remove principal">
+                            <i class="fas fa-user-minus"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center;" class="text-muted">No principals appointed yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Remove Principal Modal -->
+<div class="confirm-modal-overlay" id="removePrincipalModal">
+    <div class="confirm-modal">
+        <h3 style="margin-bottom:4px;"><i class="fas fa-user-minus" style="color:var(--yellow);"></i> Remove Principal</h3>
+        <p class="text-muted text-sm" id="modal-principal-name" style="margin-bottom:8px;"></p>
+        <div class="modal-reason">
+            <strong>What happens when a principal is removed?</strong><br>
+            <ul style="margin: 6px 0 0 16px; line-height: 1.8;">
+                <li>Their login access is immediately revoked.</li>
+                <li><strong>The organization remains intact</strong> — all teachers, students, classes, and attendance records in their school are fully preserved.</li>
+                <li>A new principal can be appointed to the same organization afterwards.</li>
+            </ul>
+            <br>
+            Use this when a principal leaves their role or needs to be replaced.
+        </div>
+        <div class="form-group" style="background: rgba(239,68,68,0.06); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;">
+            <span style="font-size: 0.8rem; color: var(--text3);">Organization:</span>
+            <strong id="modal-org-name" style="color: var(--primary); display: block;"></strong>
+        </div>
+        <form method="POST" id="removePrincipalForm">
+            <div class="form-group">
+                <label>Type the principal's name to confirm: <strong id="modal-confirm-name"></strong></label>
+                <input type="text" name="confirm_name" placeholder="Type name here..." required autocomplete="off">
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="btn" style="background: rgba(239,68,68,0.2); color: var(--red); border: 1px solid rgba(239,68,68,0.3);">
+                    <i class="fas fa-user-minus"></i> Confirm Remove
+                </button>
+                <button type="button" onclick="closeModal()" class="btn" style="background: var(--bg3); color: var(--text2);">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openRemoveModal(principalId, principalName, orgName) {
+    document.getElementById('modal-principal-name').textContent = principalName;
+    document.getElementById('modal-confirm-name').textContent = principalName;
+    document.getElementById('modal-org-name').textContent = orgName;
+    document.getElementById('removePrincipalForm').action = `/system/principals/delete/${principalId}`;
+    document.getElementById('removePrincipalModal').classList.add('active');
+}
+function closeModal() {
+    document.querySelectorAll('.confirm-modal-overlay').forEach(m => m.classList.remove('active'));
+}
+</script>
+{% endblock %}

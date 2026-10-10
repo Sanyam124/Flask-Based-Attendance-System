@@ -40,6 +40,8 @@ def _move_user_face_data(user, old_rel_path):
             shutil.move(old_full_path, new_full_path)
             frs.rebuild_encodings()
         except Exception as e:
+            print(f"[Admin] Error moving face data: {e}")
+
 
 @admin_bp.route('/admin/dashboard')
 @login_required(role='principal')
@@ -468,6 +470,7 @@ def admin_edit_class(class_id):
                 from extensions import frs
                 frs.rebuild_encodings()
             except Exception as e:
+                flash(f"Class renamed in DB, but failed to move folder: {e}", "warning")
 
         flash(f"Class renamed to '{new_name}' successfully.", "success")
         return redirect(url_for('admin.admin_classes'))

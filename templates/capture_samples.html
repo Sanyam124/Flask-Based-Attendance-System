@@ -3,55 +3,140 @@
 {% block title %}Face Registration — Smart Attendance{% endblock %}
 
 {% block extra_css %}
-.video-frame {
-  width: 100%;
+/* ── Layout ── */
+.capture-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 900px) { .capture-grid { grid-template-columns: 1fr; } }
+
+/* ── Video Frame ── */
+.video-wrap {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 2px solid rgba(99,102,241,0.35);
+  background: #06080f;
+  aspect-ratio: 4/3;
   max-width: 560px;
-  aspect-ratio: 16/9;
-  border-radius: var(--radius);
-  border: 2px solid rgba(99,102,241,0.3);
-  background: #0a0c14;
-  display: block;
-  object-fit: cover;
 }
-.capture-status {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.pulse-dot {
-  width: 12px; height: 12px;
+.video-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Face-target overlay */
+.face-guide {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -54%);
+  width: 44%;
+  aspect-ratio: 1;
+  border: 2.5px dashed rgba(99,102,241,0.55);
   border-radius: 50%;
-  background: var(--red);
-  animation: pulse 1.2s ease infinite;
-  flex-shrink: 0;
+  pointer-events: none;
+  animation: guideGlow 2.4s ease-in-out infinite;
 }
-.pulse-dot.active { background: var(--green); }
-@keyframes pulse {
-  0%,100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.4); opacity: 0.6; }
+@keyframes guideGlow {
+  0%,100% { border-color: rgba(99,102,241,0.4); box-shadow: none; }
+  50%      { border-color: rgba(99,102,241,0.9); box-shadow: 0 0 18px rgba(99,102,241,0.3); }
 }
-.instruction-card {
+.face-guide.ok   { border-color: rgba(16,185,129,0.85); animation: guideOk 1s ease-in-out infinite; }
+@keyframes guideOk {
+  0%,100% { box-shadow: 0 0 8px rgba(16,185,129,0.25); }
+  50%      { box-shadow: 0 0 22px rgba(16,185,129,0.5); }
+}
+
+/* Status badge on video */
+.video-badge {
+  position: absolute;
+  bottom: 14px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: white;
+  font-size: 0.82rem; font-weight: 600;
+  padding: 7px 18px;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: background 0.4s;
+}
+.video-badge.ok   { background: rgba(16,185,129,0.85); border-color: #10b981; }
+.video-badge.warn { background: rgba(239,68,68,0.85); border-color: #ef4444; }
+
+/* ── Big Progress Ring ── */
+.ring-wrap {
+  display: flex; justify-content: center; align-items: center;
+  padding: 20px 0 12px;
+}
+.ring-svg { transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--bg3); stroke-width: 10; }
+.ring-fill  { fill: none; stroke: var(--primary); stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 314;
+  stroke-dashoffset: 314;
+  transition: stroke-dashoffset 0.6s ease, stroke 0.4s; }
+.ring-fill.done { stroke: var(--green); }
+.ring-label {
+  position: absolute;
+  display: flex; flex-direction: column; align-items: center;
+}
+.ring-count { font-size: 2.2rem; font-weight: 800; color: var(--text); line-height: 1; }
+.ring-total { font-size: 0.78rem; color: var(--text3); margin-top: 2px; }
+
+/* ── Phase Tips ── */
+.tip-box {
   background: rgba(99,102,241,0.08);
   border: 1px solid rgba(99,102,241,0.2);
   border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 20px;
+  padding: 14px 18px;
+  display: flex; gap: 12px; align-items: flex-start;
+  min-height: 70px;
+  transition: background 0.4s, border-color 0.4s;
 }
-.step { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
-.step:last-child { margin-bottom: 0; }
-.step-num {
-  width: 28px; height: 28px;
-  background: var(--primary);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.78rem; font-weight: 700; color: white;
-  flex-shrink: 0;
+.tip-box.warn { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.3); }
+.tip-icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+.tip-text { font-size: 0.82rem; color: var(--text2); line-height: 1.6; }
+.tip-title { font-weight: 700; color: var(--text); font-size: 0.85rem; margin-bottom: 2px; }
+
+/* ── Checklist ── */
+.check-list { list-style: none; padding: 0; margin: 0; }
+.check-list li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 0.82rem; color: var(--text2); line-height: 1.6;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
 }
-.step-text { font-size: 0.875rem; color: var(--text2); line-height: 1.6; padding-top: 3px; }
+.check-list li:last-child { border: none; }
+.check-list .ci { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* ── Do/Don't cards ── */
+.dd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.dd-card { border-radius: 10px; padding: 12px 14px; }
+.dd-card.do   { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); }
+.dd-card.dont { background: rgba(239,68,68,0.08);  border: 1px solid rgba(239,68,68,0.2); }
+.dd-head { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+.dd-card.do   .dd-head { color: var(--green); }
+.dd-card.dont .dd-head { color: var(--red); }
+.dd-card ul { margin: 0; padding-left: 14px; font-size: 0.8rem; color: var(--text2); line-height: 1.8; }
+
+/* ── Completion banner ── */
+.complete-banner {
+  display: none;
+  background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(52,211,153,0.08));
+  border: 1.5px solid rgba(16,185,129,0.4);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  text-align: center;
+  animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+.complete-banner.show { display: block; }
+@keyframes popIn { from { transform:scale(0.85); opacity:0; } to { transform:scale(1); opacity:1; } }
+
+/* ── Pulse dot ── */
+.pulse-dot { width:10px; height:10px; border-radius:50%; background:var(--green); flex-shrink:0;
+  animation: pulse 1.2s ease infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.5);opacity:0.5;} }
 {% endblock %}
 
 {% block nav_links %}
@@ -73,98 +158,297 @@
 {% endblock %}
 
 {% block content %}
-<div style="display:grid;grid-template-columns:3fr 2fr;gap:24px;align-items:start">
+<div class="capture-grid">
 
-  <!-- Left: Video -->
+  <!-- ═══ LEFT: Video + Progress ═══ -->
   <div>
-    <div class="capture-status" style="margin-bottom:16px">
-      <div class="pulse-dot active" id="status-dot"></div>
-      <div>
-        <div style="font-weight:700;color:var(--text);font-size:0.9rem" id="status-title">Camera Active — Capturing...</div>
-        <div style="font-size:0.78rem;color:var(--text3)" id="status-sub">Stay still and look directly at the camera</div>
+
+    <!-- Status bar above video -->
+    <div style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:14px">
+      <div class="pulse-dot" id="pulse-dot"></div>
+      <div style="flex:1">
+        <div style="font-weight:700;color:var(--text);font-size:0.9rem" id="status-title">Camera Active — Initializing…</div>
+        <div style="font-size:0.75rem;color:var(--text3)" id="status-sub">Starting face detection, please wait…</div>
       </div>
+      <div style="font-size:0.78rem;color:var(--text3);font-weight:600" id="status-count">— / —</div>
     </div>
 
-    <img src="{{ url_for('student.student_video_feed') }}"
-         class="video-frame"
-         alt="Live Camera Feed"
-         id="video-feed" />
+    <!-- Video with face-guide overlay -->
+    <div class="video-wrap">
+      <img src="{{ url_for('student.student_video_feed') }}" alt="Live Camera Feed" id="video-feed" />
+      <div class="face-guide" id="face-guide"></div>
+      <div class="video-badge" id="video-badge">⏳ Detecting face…</div>
+    </div>
 
-    <div style="margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px">
+    <!-- Linear progress bar -->
+    <div style="margin-top:14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:0.8rem;color:var(--text2);font-weight:600">Capture Progress</span>
-        <span style="font-size:0.8rem;color:var(--text3)" id="progress-text">Checking...</span>
+        <span style="font-size:0.8rem;color:var(--primary);font-weight:700" id="pct-label">0%</span>
       </div>
-      <div class="progress-wrap">
-        <div class="progress-bar good" id="progress-bar" style="width:0%"></div>
+      <div class="progress-wrap" style="height:10px">
+        <div class="progress-bar good" id="progress-bar" style="width:0%;transition:width 0.6s ease"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <span style="font-size:0.72rem;color:var(--text3)">0</span>
+        <span style="font-size:0.72rem;color:var(--text3)" id="bar-count">0 / 50 captured</span>
+        <span style="font-size:0.72rem;color:var(--text3)">50</span>
       </div>
     </div>
+
+    <!-- Completion banner (hidden until done) -->
+    <div class="complete-banner" id="complete-banner">
+      <div style="font-size:2.5rem;margin-bottom:8px">🎉</div>
+      <div style="font-size:1.1rem;font-weight:800;color:var(--green);margin-bottom:4px">Registration Complete!</div>
+      <div style="font-size:0.85rem;color:var(--text2)">All 50 samples captured. Redirecting to your dashboard…</div>
+    </div>
+
   </div>
 
-  <!-- Right: Instructions -->
+  <!-- ═══ RIGHT: Guide Panel ═══ -->
   <div>
-    <div class="instruction-card">
-      <div style="font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px">
-        <i class="fas fa-info-circle" style="color:var(--primary)"></i>
-        How it works
+
+    <!-- Progress ring + phase tip -->
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px">
+
+      <!-- Ring -->
+      <div class="ring-wrap">
+        <div style="position:relative;display:flex;align-items:center;justify-content:center">
+          <svg class="ring-svg" width="120" height="120" viewBox="0 0 120 120">
+            <circle class="ring-track" cx="60" cy="60" r="50"/>
+            <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="50"/>
+          </svg>
+          <div class="ring-label">
+            <div class="ring-count" id="ring-count">0</div>
+            <div class="ring-total">of 50</div>
+          </div>
+        </div>
       </div>
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-text">Admin issued you a token — you are authorized to register.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-text">Look directly at the camera. Keep your face fully visible.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-text">The system captures <strong>50 samples</strong> while verifying it's only your face.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-text">If another face appears, registration <strong style="color:var(--red)">aborts automatically</strong>.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">5</div>
-        <div class="step-text">You'll be redirected once capture is complete. ✅</div>
+
+      <!-- Phase-based live tip -->
+      <div class="tip-box" id="tip-box">
+        <div class="tip-icon" id="tip-icon">📷</div>
+        <div>
+          <div class="tip-title" id="tip-title">Getting Ready</div>
+          <div class="tip-text" id="tip-text">Sit or stand comfortably in front of the camera. Make sure your face is well-lit from the front.</div>
+        </div>
       </div>
     </div>
 
-    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius);padding:16px 20px">
-      <div style="font-size:0.8rem;font-weight:700;color:var(--red);margin-bottom:8px"><i class="fas fa-exclamation-triangle"></i> Security Notice</div>
-      <ul style="font-size:0.8rem;color:var(--text3);padding-left:16px;line-height:1.8">
-        <li>Only your face must appear during capture</li>
-        <li>Do not hold up photos or use a phone screen</li>
-        <li>Be in a well-lit environment</li>
-        <li>Registration is one-time — admin must reset to redo</li>
+    <!-- Do's and Don'ts -->
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px">
+      <div style="font-weight:700;color:var(--text);font-size:0.88rem;margin-bottom:4px"><i class="fas fa-lightbulb" style="color:#f59e0b;margin-right:8px"></i>Tips for Best Results</div>
+      <div class="dd-grid">
+        <div class="dd-card do">
+          <div class="dd-head">✅ Do</div>
+          <ul>
+            <li>Face the camera directly</li>
+            <li>Use good front lighting</li>
+            <li>Keep face inside the oval</li>
+            <li>Sit still &amp; breathe slowly</li>
+            <li>Remove hat / headphones</li>
+          </ul>
+        </div>
+        <div class="dd-card dont">
+          <div class="dd-head">❌ Don't</div>
+          <ul>
+            <li>Show another person's face</li>
+            <li>Hold up a photo / phone screen</li>
+            <li>Capture in very dark room</li>
+            <li>Keep moving head rapidly</li>
+            <li>Wear sunglasses / mask</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checklist -->
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px">
+      <div style="font-weight:700;color:var(--text);font-size:0.88rem;margin-bottom:10px"><i class="fas fa-tasks" style="color:var(--primary);margin-right:8px"></i>Before You Start</div>
+      <ul class="check-list">
+        <li><span class="ci">💡</span> Ensure you are in a well-lit area — avoid backlighting</li>
+        <li><span class="ci">👤</span> Make sure NO other person's face is visible in the frame</li>
+        <li><span class="ci">📐</span> Keep your face centred inside the dotted oval guide</li>
+        <li><span class="ci">🚫</span> Do not use photos, screens, or masks — system detects proxies</li>
+        <li><span class="ci">🔁</span> If the camera resets, the system detected a different face — retry</li>
       </ul>
     </div>
-  </div>
 
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  function checkStatus() {
-    fetch('/student/check_capture_status')
-      .then(r => r.json())
-      .then(data => {
-        if (data.completed) {
-          document.getElementById('status-dot').classList.remove('active');
-          document.getElementById('status-title').textContent = '✅ Registration Complete!';
-          document.getElementById('status-sub').textContent = 'Redirecting to dashboard...';
-          document.getElementById('progress-bar').style.width = '100%';
-          document.getElementById('progress-text').textContent = '50 / 50';
-          setTimeout(() => { window.location.href = '/student/dashboard'; }, 1500);
-        } else {
-          document.getElementById('progress-text').textContent = 'Capturing...';
-          setTimeout(checkStatus, 2000);
-        }
-      })
-      .catch(() => setTimeout(checkStatus, 3000));
+// ── Phase tips shown at different progress stages ──
+const PHASES = [
+  { at: 0,  icon: '📷', title: 'Getting Ready',        text: 'Sit in front of the camera in a well-lit spot. Centre your face inside the dotted oval.' },
+  { at: 5,  icon: '😐', title: 'Hold Still',           text: 'Look straight at the camera. The system is locking onto your face. Keep still for a few seconds.' },
+  { at: 15, icon: '↔️', title: 'Slight Side-to-Side',  text: 'Slowly turn your head a few degrees left and right. This helps capture more face angles.' },
+  { at: 25, icon: '↕️', title: 'Slight Tilt Up/Down',  text: 'Gently tilt your head slightly up and then down. Stay within the oval guide.' },
+  { at: 35, icon: '😊', title: 'Natural Expressions',  text: 'Try a small smile or neutral expression. Avoid exaggerated movements.' },
+  { at: 45, icon: '🏁', title: 'Almost There!',        text: 'Great job! Just a few more samples. Hold steady and look at the camera.' },
+];
+
+let lastPhaseIdx = -1;
+let isComplete = false;
+let displayedCount = 0;  // The number currently shown in UI (for smooth animation)
+let prevServerCount = 0; // Last count received from server
+let animFrame = null;    // requestAnimationFrame handle
+let resetWarningActive = false;
+
+function getPhase(count) {
+  let phase = PHASES[0];
+  for (const p of PHASES) { if (count >= p.at) phase = p; }
+  return phase;
+}
+
+// Smoothly animate displayedCount toward target over ~600ms
+function animateTo(target) {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  const start = displayedCount;
+  const delta = target - start;
+  if (delta === 0) return;
+  const duration = Math.min(600, Math.abs(delta) * 60); // max 600ms, 60ms per step
+  const startTime = performance.now();
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease out cubic
+    const eased = 1 - Math.pow(1 - progress, 3);
+    displayedCount = Math.round(start + delta * eased);
+    renderCount(displayedCount);
+    if (progress < 1) animFrame = requestAnimationFrame(step);
+  }
+  animFrame = requestAnimationFrame(step);
+}
+
+function renderCount(count) {
+  const total = 50;
+  const pct = Math.round((count / total) * 100);
+  document.getElementById('ring-count').textContent = count;
+  document.getElementById('bar-count').textContent = `${count} / ${total} captured`;
+  document.getElementById('status-count').textContent = `${count} / ${total}`;
+  document.getElementById('pct-label').textContent = `${pct}%`;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  const dash = 314;
+  document.getElementById('ring-fill').style.strokeDashoffset = dash - (dash * pct / 100);
+}
+
+function showResetWarning() {
+  if (resetWarningActive) return;
+  resetWarningActive = true;
+  // Flash the tip box red
+  const box = document.getElementById('tip-box');
+  box.classList.add('warn');
+  document.getElementById('tip-icon').textContent = '⚠️';
+  document.getElementById('tip-title').textContent = 'Camera Reset!';
+  document.getElementById('tip-text').textContent = 'A different face was detected — progress was cleared for security. Make sure ONLY your face is in frame, then hold still.';
+  document.getElementById('video-badge').className = 'video-badge warn';
+  document.getElementById('video-badge').textContent = '⚠️ Reset — different face detected!';
+  document.getElementById('face-guide').classList.remove('ok');
+  // Auto-clear after 4 seconds
+  setTimeout(() => {
+    resetWarningActive = false;
+    box.classList.remove('warn');
+    document.getElementById('video-badge').className = 'video-badge';
+    document.getElementById('video-badge').textContent = '⏳ Restarting capture…';
+    lastPhaseIdx = -1; // Force phase tip refresh
+  }, 4000);
+}
+
+function updateUI(data) {
+  const { count, total, percent, completed } = data;
+
+  if (completed) {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    displayedCount = total;
+    renderCount(total);
+    document.getElementById('ring-fill').classList.add('done');
+    document.getElementById('face-guide').classList.add('ok');
+    document.getElementById('progress-bar').style.background = 'var(--green)';
+    document.getElementById('video-badge').className = 'video-badge ok';
+    document.getElementById('video-badge').textContent = '✅ Complete!';
+    document.getElementById('pulse-dot').style.background = 'var(--green)';
+    document.getElementById('status-title').textContent = '✅ Registration Complete!';
+    document.getElementById('status-sub').textContent = 'All samples captured — redirecting…';
+    document.getElementById('complete-banner').classList.add('show');
+    setTip({ icon: '🎉', title: 'All Done!', text: 'Your face has been successfully registered. You will be redirected to your dashboard shortly.' });
+    return;
   }
 
-  window.onload = checkStatus;
+  // ── Detect backwards jump (proxy reset) ──
+  // Only flag a reset if we had meaningful progress (>3) and count dropped significantly
+  if (prevServerCount > 3 && count < prevServerCount - 2) {
+    showResetWarning();
+    // Animate smoothly down to 0 (so user understands what happened)
+    animateTo(0);
+    prevServerCount = count;
+    return;
+  }
+  prevServerCount = count;
+
+  // Animate the displayed count to the new value (never animate backwards unless reset)
+  if (count > displayedCount || count === 0) {
+    animateTo(count);
+  }
+
+  // ── Status bar ──
+  if (count === 0) {
+    document.getElementById('status-title').textContent = 'Camera Active — Waiting for face…';
+    document.getElementById('status-sub').textContent = 'Move into frame and centre your face inside the oval.';
+    if (!resetWarningActive) {
+      document.getElementById('video-badge').className = 'video-badge';
+      document.getElementById('video-badge').textContent = '⏳ Detecting face…';
+    }
+  } else {
+    document.getElementById('status-title').textContent = `Capturing… ${percent}% complete`;
+    document.getElementById('status-sub').textContent = 'Stay still and follow the phase tips →';
+    if (!resetWarningActive) {
+      document.getElementById('video-badge').className = 'video-badge ok';
+      document.getElementById('video-badge').textContent = `📸 ${count} / ${total} captured`;
+      document.getElementById('face-guide').classList.add('ok');
+    }
+  }
+
+  // ── Phase tip (only update when phase changes) ──
+  if (!resetWarningActive) {
+    const phase = getPhase(count);
+    const phaseIdx = PHASES.indexOf(phase);
+    if (phaseIdx !== lastPhaseIdx) {
+      lastPhaseIdx = phaseIdx;
+      setTip(phase);
+    }
+  }
+}
+
+function setTip({ icon, title, text }) {
+  document.getElementById('tip-icon').textContent = icon;
+  document.getElementById('tip-title').textContent = title;
+  document.getElementById('tip-text').textContent = text;
+  const box = document.getElementById('tip-box');
+  box.style.transition = 'opacity 0.25s';
+  box.style.opacity = '0';
+  setTimeout(() => { box.style.opacity = '1'; }, 250);
+}
+
+function checkStatus() {
+  if (isComplete) return;
+  fetch('/student/check_capture_status')
+    .then(r => r.json())
+    .then(data => {
+      updateUI(data);
+      if (data.completed) {
+        isComplete = true;
+        setTimeout(() => { window.location.href = '/student/dashboard'; }, 2500);
+      } else {
+        setTimeout(checkStatus, 2000); // Poll every 2s — smooth, not jarring
+      }
+    })
+    .catch(() => setTimeout(checkStatus, 3000));
+}
+
+window.onload = checkStatus;
 </script>
 {% endblock %}
