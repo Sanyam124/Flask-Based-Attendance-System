@@ -2,7 +2,7 @@ Flask
 Flask-SQLAlchemy
 Flask-SocketIO
 python-dotenv
-opencv-python
+opencv-python-headless
 face-recognition
 numpy<2.0.0
 scikit-learn
