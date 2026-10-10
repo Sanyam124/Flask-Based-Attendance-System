@@ -67,6 +67,9 @@ class User(db.Model):
 
     class_ref = db.relationship('Class', backref='students', foreign_keys=[class_id])
     
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    
     # --- REMOVED: The conflicting 'class_assignments' relationship was removed from here. ---
     # The backref in the ClassTeacher model now creates this property automatically.
 
