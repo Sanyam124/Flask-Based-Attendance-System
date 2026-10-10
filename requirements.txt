@@ -3,7 +3,8 @@ Flask-SQLAlchemy
 Flask-SocketIO
 python-dotenv
 opencv-python-headless
-face-recognition
+face-recognition-models
+Pillow
 numpy<2.0.0
 scikit-learn
 pandas
